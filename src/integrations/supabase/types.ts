@@ -9,7 +9,83 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          method: string
+          student_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date: string
+          id?: string
+          method: string
+          student_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          method?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          class_type: string
+          created_at: string
+          end_date: string | null
+          id: string
+          name: string
+          payment: number
+          payment_method: string
+          picture_url: string | null
+          serial_number: number
+          start_date: string
+          student_id: string
+        }
+        Insert: {
+          class_type: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name: string
+          payment: number
+          payment_method: string
+          picture_url?: string | null
+          serial_number: number
+          start_date: string
+          student_id: string
+        }
+        Update: {
+          class_type?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name?: string
+          payment?: number
+          payment_method?: string
+          picture_url?: string | null
+          serial_number?: number
+          start_date?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
