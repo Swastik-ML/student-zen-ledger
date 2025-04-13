@@ -135,7 +135,7 @@ const MasterData = () => {
                 <SelectValue placeholder="All Classes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Classes</SelectItem>
+                <SelectItem value="all-classes">All Classes</SelectItem>
                 <SelectItem value="Ho'oponopo">Ho'oponopo</SelectItem>
                 <SelectItem value="Astrology">Astrology</SelectItem>
                 <SelectItem value="Pooja">Pooja</SelectItem>
