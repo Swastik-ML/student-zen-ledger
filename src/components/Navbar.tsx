@@ -1,10 +1,14 @@
 
-import { Link, useLocation } from "react-router-dom";
-import { BookOpen, FilePlus, BarChart3, FileText } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { BookOpen, FilePlus, BarChart3, FileText, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   const navItems = [
     { name: "Dashboard", icon: <BookOpen className="mr-2 h-4 w-4" />, path: "/" },
@@ -12,6 +16,15 @@ const Navbar = () => {
     { name: "Master Data", icon: <FileText className="mr-2 h-4 w-4" />, path: "/master-data" },
     { name: "Financial Reports", icon: <BarChart3 className="mr-2 h-4 w-4" />, path: "/financial-reports" },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem("authenticated");
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out",
+    });
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-background border-b">
@@ -37,6 +50,16 @@ const Navbar = () => {
               {item.name}
             </Link>
           ))}
+          
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="flex items-center text-sm font-medium"
+            onClick={handleLogout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
         </nav>
       </div>
     </header>

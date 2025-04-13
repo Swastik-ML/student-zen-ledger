@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ClassType, PaymentMethod } from "@/utils/types";
 import { createStudent } from "@/services/studentService";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 // Form schema
 const formSchema = z.object({
@@ -37,11 +37,39 @@ const AddStudent = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nextSerialNumber, setNextSerialNumber] = useState<number>(1);
+  
+  // Fetch the next serial number when the component loads
+  useEffect(() => {
+    async function fetchNextSerialNumber() {
+      try {
+        // Query to get the maximum serial number from the students table
+        const { data, error } = await supabase
+          .from('students')
+          .select('serial_number')
+          .order('serial_number', { ascending: false })
+          .limit(1);
+        
+        if (error) {
+          console.error("Error fetching serial number:", error);
+          return;
+        }
+        
+        // Set the next serial number to max + 1, or 1 if no students exist
+        const maxSerialNumber = data && data.length > 0 ? data[0].serial_number : 0;
+        setNextSerialNumber(maxSerialNumber + 1);
+      } catch (err) {
+        console.error("Error in fetchNextSerialNumber:", err);
+      }
+    }
+    
+    fetchNextSerialNumber();
+  }, []);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      serialNumber: undefined,
+      serialNumber: undefined, // Will be set by the useEffect
       name: "",
       studentId: "",
       startDate: new Date(),
@@ -52,6 +80,11 @@ const AddStudent = () => {
       pictureUrl: null,
     },
   });
+
+  // Update the form value when nextSerialNumber changes
+  useEffect(() => {
+    form.setValue('serialNumber', nextSerialNumber);
+  }, [nextSerialNumber, form]);
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -78,8 +111,21 @@ const AddStudent = () => {
         variant: "default",
       });
       
-      // Reset form
-      form.reset();
+      // Reset form and update serial number for the next entry
+      form.reset({
+        serialNumber: nextSerialNumber + 1,
+        name: "",
+        studentId: "",
+        startDate: new Date(),
+        endDate: null,
+        payment: undefined,
+        paymentMethod: "Cash",
+        classType: "Ho'oponopo",
+        pictureUrl: null,
+      });
+      
+      // Update the next serial number
+      setNextSerialNumber(prevNumber => prevNumber + 1);
       
       // Redirect to master data page after successful submission
       navigate("/master-data");
@@ -114,8 +160,11 @@ const AddStudent = () => {
                     <FormItem>
                       <FormLabel>Serial Number</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="123" {...field} />
+                        <Input type="number" placeholder="123" {...field} readOnly className="bg-gray-100" />
                       </FormControl>
+                      <FormDescription>
+                        Auto-generated serial number
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
