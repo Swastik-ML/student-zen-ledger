@@ -1,253 +1,151 @@
 
 import { useState, useEffect } from "react";
-import { mockStudents } from "@/utils/mockData";
-import { Student } from "@/utils/types";
-import { formatCurrency, formatDate } from "@/utils/formatters";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Search, ArrowUpDown, Edit, Trash2, Eye } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Student, ClassType } from "@/utils/types";
+import { Search } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { fetchStudents } from "@/services/studentService";
 
 const MasterData = () => {
-  const { toast } = useToast();
   const [students, setStudents] = useState<Student[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterClassType, setFilterClassType] = useState<string>("");
-  const [sortConfig, setSortConfig] = useState<{
-    key: keyof Student | '';
-    direction: 'ascending' | 'descending';
-  }>({ key: '', direction: 'ascending' });
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [classFilter, setClassFilter] = useState<string>("");
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate API call
-    const timer = setTimeout(() => {
-      setStudents(mockStudents);
-      setIsLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // Generate initials for avatar fallback
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase();
-  };
-  
-  // Handle sort
-  const handleSort = (key: keyof Student) => {
-    let direction: 'ascending' | 'descending' = 'ascending';
-    
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
-    }
-    
-    setSortConfig({ key, direction });
-  };
-  
-  // Handle filter and sort
-  const filteredAndSortedStudents = () => {
-    // First filter the students
-    let result = students;
-    
-    if (searchTerm) {
-      result = result.filter(
-        student => 
-          student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.studentId.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    if (filterClassType) {
-      result = result.filter(
-        student => student.classType === filterClassType
-      );
-    }
-    
-    // Then sort the filtered results
-    if (sortConfig.key) {
-      result = [...result].sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
-        }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    
-    return result;
-  };
+    const loadStudents = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchStudents();
+        setStudents(data);
+        setFilteredStudents(data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading students:", err);
+        setError("Failed to load students. Please try again later.");
+        setLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load students. Please try again later."
+        });
+      }
+    };
 
-  // Handle delete (simulated)
-  const handleDelete = (id: string, name: string) => {
-    // In a real app, would make an API call here
-    toast({
-      title: "Student Deleted",
-      description: `${name} has been deleted from your records.`,
+    loadStudents();
+  }, [toast]);
+
+  useEffect(() => {
+    // Filter students based on search term and class filter
+    const result = students.filter(student => {
+      const matchesSearch = searchTerm === "" || 
+        student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesClass = classFilter === "" || student.classType === classFilter;
+      
+      return matchesSearch && matchesClass;
     });
     
-    // Filter out the deleted student
-    setStudents(students.filter(student => student.id !== id));
-  };
+    setFilteredStudents(result);
+  }, [searchTerm, classFilter, students]);
 
-  // Prepare the filtered and sorted data
-  const displayedStudents = filteredAndSortedStudents();
+  if (loading) {
+    return (
+      <div className="container py-8 flex flex-col items-center justify-center">
+        <div className="w-8 h-8 border-4 border-teacher-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-teacher-500">Loading student data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-8">
+        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-md">
+          <h3 className="font-bold">Error</h3>
+          <p>{error}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4" 
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">
-      <div className="flex items-center mb-8">
-        <FileText className="h-6 w-6 mr-2 text-teacher-500" />
-        <h1 className="text-3xl font-bold text-teacher-700">Master Data</h1>
-      </div>
+      <h1 className="text-2xl font-bold mb-6">Master Data</h1>
       
-      <Card className="mb-8">
-        <CardHeader className="pb-0">
-          <CardTitle>Students Master Database</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 py-4">
-            <div className="relative flex-1">
-              <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by name or ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            
-            <Select
-              value={filterClassType}
-              onValueChange={setFilterClassType}
-            >
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="All Classes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-classes">All Classes</SelectItem>
-                <SelectItem value="Ho'oponopo">Ho'oponopo</SelectItem>
-                <SelectItem value="Astrology">Astrology</SelectItem>
-                <SelectItem value="Pooja">Pooja</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Input 
+            placeholder="Search by name or student ID" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        <div className="w-full md:w-64">
+          <Select value={classFilter} onValueChange={setClassFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by class" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Classes</SelectItem>
+              <SelectItem value="Ho'oponopo">Ho'oponopo</SelectItem>
+              <SelectItem value="Astrology">Astrology</SelectItem>
+              <SelectItem value="Pooja">Pooja</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       
       <div className="rounded-md border">
         <Table>
+          <TableCaption>List of all registered students</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead>Student</TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('serialNumber')}>
-                <div className="flex items-center">
-                  S.No
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('studentId')}>
-                <div className="flex items-center">
-                  Student ID
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('startDate')}>
-                <div className="flex items-center">
-                  Start Date
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead>End Date</TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('payment')}>
-                <div className="flex items-center">
-                  Payment
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead>Payment Method</TableHead>
+              <TableHead>S.No</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Student ID</TableHead>
+              <TableHead>Start Date</TableHead>
               <TableHead>Class Type</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Payment</TableHead>
+              <TableHead>Payment Method</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              [1, 2, 3, 4, 5].map((index) => (
-                <TableRow key={index}>
-                  <TableCell colSpan={9}>
-                    <div className="h-12 bg-gray-100 animate-pulse rounded"></div>
-                  </TableCell>
+            {filteredStudents.length > 0 ? (
+              filteredStudents.map((student) => (
+                <TableRow key={student.id}>
+                  <TableCell>{student.serialNumber}</TableCell>
+                  <TableCell className="font-medium">{student.name}</TableCell>
+                  <TableCell>{student.studentId}</TableCell>
+                  <TableCell>{new Date(student.startDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{student.classType}</TableCell>
+                  <TableCell>{student.payment}</TableCell>
+                  <TableCell>{student.paymentMethod}</TableCell>
                 </TableRow>
               ))
-            ) : displayedStudents.length === 0 ? (
+            ) : (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
-                  No students found matching your search.
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  {students.length === 0 ? "No students found in the database." : "No students match your search criteria."}
                 </TableCell>
               </TableRow>
-            ) : (
-              displayedStudents.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={student.pictureUrl || undefined} alt={student.name} />
-                        <AvatarFallback className="bg-teacher-300 text-white">
-                          {getInitials(student.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{student.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{student.serialNumber}</TableCell>
-                  <TableCell>{student.studentId}</TableCell>
-                  <TableCell>{formatDate(student.startDate)}</TableCell>
-                  <TableCell>{formatDate(student.endDate)}</TableCell>
-                  <TableCell className="font-medium">{formatCurrency(student.payment)}</TableCell>
-                  <TableCell>{student.paymentMethod}</TableCell>
-                  <TableCell>
-                    <Badge
-                      className={
-                        student.classType === "Ho'oponopo"
-                          ? "bg-purple-100 text-purple-800 hover:bg-purple-200"
-                          : student.classType === "Astrology"
-                          ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                          : "bg-orange-100 text-orange-800 hover:bg-orange-200"
-                      }
-                    >
-                      {student.classType}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleDelete(student.id, student.name)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
             )}
           </TableBody>
         </Table>

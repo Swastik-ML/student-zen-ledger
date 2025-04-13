@@ -1,259 +1,325 @@
+
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { Input } from "@/components/ui/input";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ClassType, PaymentMethod } from "@/utils/types";
-import { FilePlus, Upload } from "lucide-react";
+import { createStudent } from "@/services/studentService";
+import { useNavigate } from "react-router-dom";
+
+// Form schema
+const formSchema = z.object({
+  serialNumber: z.coerce.number().min(1, "Serial number is required"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  studentId: z.string().min(2, "Student ID is required"),
+  startDate: z.date({ required_error: "Start date is required" }),
+  endDate: z.date().nullable().optional(),
+  payment: z.coerce.number().min(0, "Payment must be a positive number"),
+  paymentMethod: z.enum(["Cash", "Bank Transfer", "UPI", "Check", "Other"] as const),
+  classType: z.enum(["Ho'oponopo", "Astrology", "Pooja"] as const),
+  pictureUrl: z.string().nullable().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 const AddStudent = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    studentId: "",
-    startDate: "",
-    endDate: "", // Optional
-    payment: "",
-    paymentMethod: "" as PaymentMethod,
-    classType: "" as ClassType,
-    notes: "",
-    picture: null as File | null
+  
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      serialNumber: undefined,
+      name: "",
+      studentId: "",
+      startDate: new Date(),
+      endDate: null,
+      payment: undefined,
+      paymentMethod: "Cash",
+      classType: "Ho'oponopo",
+      pictureUrl: null,
+    },
   });
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setFormData(prev => ({ ...prev, picture: file }));
-    
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
+  const onSubmit = async (data: FormValues) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Format dates for database
+      const formattedData = {
+        ...data,
+        startDate: format(data.startDate, "yyyy-MM-dd"),
+        endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : null,
       };
-      reader.readAsDataURL(file);
-    } else {
-      setPreviewUrl(null);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Validate form
-    if (!formData.name || !formData.startDate || !formData.payment || !formData.paymentMethod || !formData.classType) {
+      
+      await createStudent(formattedData);
+      
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      setIsSubmitting(false);
-      return;
-    }
-    
-    // Simulate API call
-    setTimeout(() => {
-      toast({
-        title: "Success!",
-        description: `Student ${formData.name} has been added successfully.`
+        title: "Success",
+        description: "Student has been added successfully!",
+        variant: "default",
       });
       
       // Reset form
-      setFormData({
-        name: "",
-        studentId: "",
-        startDate: "",
-        endDate: "",
-        payment: "",
-        paymentMethod: "" as PaymentMethod,
-        classType: "" as ClassType,
-        notes: "",
-        picture: null
+      form.reset();
+      
+      // Redirect to master data page after successful submission
+      navigate("/master-data");
+      
+    } catch (error) {
+      console.error("Error adding student:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add student. Please try again.",
+        variant: "destructive",
       });
-      setPreviewUrl(null);
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
     <div className="container py-8">
-      <div className="flex items-center mb-8">
-        <FilePlus className="h-6 w-6 mr-2 text-teacher-500" />
-        <h1 className="text-3xl font-bold text-teacher-700">Add New Student</h1>
-      </div>
-      
-      <Card className="max-w-3xl mx-auto">
+      <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Student Information</CardTitle>
-          <CardDescription>
-            Add a new student to your records. Fields marked with * are required.
-          </CardDescription>
+          <CardTitle>Add New Student</CardTitle>
+          <CardDescription>Enter the student details to register a new student.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="Enter student's full name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="studentId">Student ID</Label>
-                <Input
-                  id="studentId"
-                  name="studentId"
-                  placeholder="Enter student ID (optional)"
-                  value={formData.studentId}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date *</Label>
-                <Input
-                  id="startDate"
-                  name="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
-                <Input
-                  id="endDate"
-                  name="endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="payment">Payment Amount (₹) *</Label>
-                <Input
-                  id="payment"
-                  name="payment"
-                  type="number"
-                  placeholder="Enter payment amount"
-                  value={formData.payment}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="paymentMethod">Payment Method *</Label>
-                <Select 
-                  onValueChange={(value) => handleSelectChange("paymentMethod", value)} 
-                  value={formData.paymentMethod}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select payment method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Cash">Cash</SelectItem>
-                    <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="UPI">UPI</SelectItem>
-                    <SelectItem value="Check">Check</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="classType">Class Type *</Label>
-                <Select 
-                  onValueChange={(value) => handleSelectChange("classType", value)} 
-                  value={formData.classType}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select class type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ho'oponopo">Ho'oponopo</SelectItem>
-                    <SelectItem value="Astrology">Astrology</SelectItem>
-                    <SelectItem value="Pooja">Pooja</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="picture">Student Picture</Label>
-                <div className="grid grid-cols-2 gap-4 items-center">
-                  <div>
-                    <label htmlFor="picture" className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-md border-gray-300 cursor-pointer hover:bg-gray-50">
-                      <div className="flex flex-col items-center">
-                        <Upload className="h-8 w-8 text-gray-400" />
-                        <span className="mt-2 text-sm text-gray-500">Upload Image</span>
-                      </div>
-                      <input
-                        id="picture"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                  
-                  {previewUrl && (
-                    <div className="h-32 w-32 relative rounded-md overflow-hidden border border-gray-200">
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="serialNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Serial Number</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="123" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
+                />
+
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="studentId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Student ID</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ST12345" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="classType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Class Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select class type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Ho'oponopo">Ho'oponopo</SelectItem>
+                          <SelectItem value="Astrology">Astrology</SelectItem>
+                          <SelectItem value="Pooja">Pooja</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Start Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>End Date (Optional)</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value || undefined}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>
+                        Leave empty if the student is currently active
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="payment"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Amount</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="1000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="paymentMethod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Method</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select payment method" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Cash">Cash</SelectItem>
+                          <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                          <SelectItem value="UPI">UPI</SelectItem>
+                          <SelectItem value="Check">Check</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="notes">Additional Notes</Label>
-              <Textarea
-                id="notes"
-                name="notes"
-                placeholder="Enter any additional information about the student"
-                value={formData.notes}
-                onChange={handleInputChange}
+              
+              <FormField
+                control={form.control}
+                name="pictureUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Picture URL (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com/image.jpg" {...field} value={field.value || ''} onChange={e => field.onChange(e.target.value || null)} />
+                    </FormControl>
+                    <FormDescription>
+                      Enter a URL for the student's profile picture
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" type="button">Cancel</Button>
-              <Button 
-                type="submit" 
-                className="bg-teacher-400 hover:bg-teacher-500 text-white" 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Adding..." : "Add Student"}
+              
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
+                    Saving...
+                  </>
+                ) : "Add Student"}
               </Button>
-            </div>
-          </form>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>
