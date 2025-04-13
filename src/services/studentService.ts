@@ -62,6 +62,13 @@ export async function fetchStudents(): Promise<Student[]> {
 
 export async function createStudent(student: Omit<Student, 'id' | 'paymentHistory'>): Promise<Student> {
   try {
+    // Ensure all required fields are provided
+    if (!student.name || !student.studentId || !student.startDate || 
+        !student.classType || !student.paymentMethod || student.payment === undefined || 
+        student.serialNumber === undefined) {
+      throw new Error('Missing required student fields');
+    }
+    
     const { data, error } = await supabase
       .from('students')
       .insert({

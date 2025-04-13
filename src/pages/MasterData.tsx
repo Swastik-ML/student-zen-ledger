@@ -15,7 +15,7 @@ const MasterData = () => {
   const [error, setError] = useState<string | null>(null);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [classFilter, setClassFilter] = useState<string>("");
+  const [classFilter, setClassFilter] = useState<string>("all"); // Changed default value to "all"
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,7 +48,7 @@ const MasterData = () => {
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
         student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesClass = classFilter === "" || student.classType === classFilter;
+      const matchesClass = classFilter === "all" || student.classType === classFilter; // Updated to match new value
       
       return matchesSearch && matchesClass;
     });
@@ -104,7 +104,7 @@ const MasterData = () => {
               <SelectValue placeholder="Filter by class" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Classes</SelectItem>
+              <SelectItem value="all">All Classes</SelectItem>
               <SelectItem value="Ho'oponopo">Ho'oponopo</SelectItem>
               <SelectItem value="Astrology">Astrology</SelectItem>
               <SelectItem value="Pooja">Pooja</SelectItem>

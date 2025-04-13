@@ -57,14 +57,20 @@ const AddStudent = () => {
     try {
       setIsSubmitting(true);
       
-      // Format dates for database
-      const formattedData = {
-        ...data,
+      // Ensure all required fields are present
+      const studentData = {
+        serialNumber: data.serialNumber,
+        name: data.name,
+        studentId: data.studentId,
         startDate: format(data.startDate, "yyyy-MM-dd"),
         endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : null,
+        payment: data.payment,
+        paymentMethod: data.paymentMethod,
+        classType: data.classType,
+        pictureUrl: data.pictureUrl
       };
       
-      await createStudent(formattedData);
+      await createStudent(studentData);
       
       toast({
         title: "Success",
