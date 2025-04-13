@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -63,7 +62,7 @@ const Login = () => {
           <div className="flex items-center justify-center mb-4">
             <BookOpen className="h-12 w-12 text-teacher-500" />
           </div>
-          <CardTitle className="text-2xl text-center">Student Manager</CardTitle>
+          <CardTitle className="text-2xl text-center">Cosmic Healer Management</CardTitle>
           <CardDescription className="text-center">
             Enter your credentials to access the dashboard
           </CardDescription>

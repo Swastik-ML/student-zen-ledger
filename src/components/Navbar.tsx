@@ -31,7 +31,7 @@ const Navbar = () => {
       <div className="container flex h-16 items-center">
         <div className="flex items-center space-x-2">
           <BookOpen className="h-6 w-6 text-teacher-400" />
-          <span className="font-bold text-xl text-teacher-500">Student Manager</span>
+          <span className="font-bold text-xl text-teacher-500">Cosmic Healer Management</span>
         </div>
 
         <nav className="ml-auto flex items-center space-x-4">
