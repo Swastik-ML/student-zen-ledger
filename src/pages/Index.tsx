@@ -3,23 +3,37 @@ import { useState, useEffect } from "react";
 import StudentCard from "@/components/StudentCard";
 import RecentPayments from "@/components/RecentPayments";
 import FinancialSummary from "@/components/FinancialSummary";
-import { mockStudents, calculateFinancialSummary } from "@/utils/mockData";
+import { calculateFinancialSummary } from "@/utils/mockData";
 import { Student } from "@/utils/types";
 import { BookOpen, Users, IndianRupee } from "lucide-react";
+import { fetchStudents } from "@/services/studentService";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate API call with a short delay
-    const timer = setTimeout(() => {
-      setStudents(mockStudents);
-      setIsLoading(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
+    const loadStudents = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchStudents();
+        setStudents(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading students:', error);
+        setIsLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load student data. Please try again later."
+        });
+      }
+    };
+    
+    loadStudents();
+  }, [toast]);
 
   // Calculate summary statistics
   const stats = calculateFinancialSummary(students);

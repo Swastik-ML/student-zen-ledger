@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { mockStudents, calculateFinancialSummary } from "@/utils/mockData";
+import { calculateFinancialSummary } from "@/utils/mockData";
 import { formatCurrency } from "@/utils/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,23 +9,37 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { BarChart3, Download } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Student } from "@/utils/types";
+import { fetchStudents } from "@/services/studentService";
+import { useToast } from "@/components/ui/use-toast";
 
 const FinancialReports = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const { toast } = useToast();
   
   useEffect(() => {
-    // Simulate API call
-    const timer = setTimeout(() => {
-      setStudents(mockStudents);
-      setIsLoading(false);
-    }, 500);
+    const loadStudents = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchStudents();
+        setStudents(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading students:', error);
+        setIsLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load student data. Please try again later."
+        });
+      }
+    };
     
-    return () => clearTimeout(timer);
-  }, []);
+    loadStudents();
+  }, [toast]);
   
-  // Calculate financial stats
+  // Calculate financial stats based on real data
   const stats = calculateFinancialSummary(students);
 
   // Prepare data for charts
@@ -45,23 +59,52 @@ const FinancialReports = () => {
   // Colors for pie chart
   const COLORS = ['#9b87f5', '#8B5CF6', '#7E69AB', '#6E59A5'];
 
-  // Generate payment history by month (simulated data)
+  // Generate monthly data from actual payments
   const generateMonthlyData = () => {
+    const currentYear = parseInt(selectedYear);
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months.map(month => {
-      // Create a semi-random but consistent pattern
-      const randomValue = Math.floor(10000 + Math.random() * 50000);
-      return {
-        name: month,
-        amount: randomValue
-      };
+    
+    // Initialize with zero amounts for all months
+    const monthlyData = months.map((month, index) => ({
+      name: month,
+      amount: 0
+    }));
+    
+    // Aggregate actual payments by month
+    students.forEach(student => {
+      student.paymentHistory.forEach(payment => {
+        const paymentDate = new Date(payment.date);
+        const paymentYear = paymentDate.getFullYear();
+        const paymentMonth = paymentDate.getMonth();
+        
+        if (paymentYear === currentYear) {
+          monthlyData[paymentMonth].amount += payment.amount;
+        }
+      });
     });
+    
+    return monthlyData;
   };
 
   // Get available years from the payment data
   const getAvailableYears = () => {
+    const years = new Set<number>();
     const currentYear = new Date().getFullYear();
-    return [currentYear - 2, currentYear - 1, currentYear];
+    
+    // Add current year and previous years as default options
+    years.add(currentYear);
+    years.add(currentYear - 1);
+    years.add(currentYear - 2);
+    
+    // Add years from actual payment data
+    students.forEach(student => {
+      student.paymentHistory.forEach(payment => {
+        const paymentYear = new Date(payment.date).getFullYear();
+        years.add(paymentYear);
+      });
+    });
+    
+    return Array.from(years).sort((a, b) => b - a);
   };
 
   // Generate student-wise payment data
@@ -268,9 +311,38 @@ const FinancialReports = () => {
           <CardTitle>Payment History</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-gray-500">
-            Payment history details will be displayed here.
-          </div>
+          {isLoading ? (
+            <div className="h-40 bg-gray-100 animate-pulse rounded" />
+          ) : students.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No payment data available.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-4">Student</th>
+                    <th className="text-left py-2 px-4">Date</th>
+                    <th className="text-left py-2 px-4">Amount</th>
+                    <th className="text-left py-2 px-4">Method</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.flatMap(student => 
+                    student.paymentHistory.map(payment => (
+                      <tr key={payment.id} className="border-b hover:bg-gray-50">
+                        <td className="py-2 px-4">{student.name}</td>
+                        <td className="py-2 px-4">{new Date(payment.date).toLocaleDateString()}</td>
+                        <td className="py-2 px-4">{formatCurrency(payment.amount)}</td>
+                        <td className="py-2 px-4">{payment.method}</td>
+                      </tr>
+                    ))
+                  ).slice(0, 10)}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
