@@ -44,22 +44,8 @@ const FinancialReports = () => {
   // Calculate financial stats based on real data
   const stats = calculateFinancialSummary(students);
 
-  // Prepare data for charts with payment amounts instead of student count
-  const classTypeData = [
-    { name: "Ho'oponopo", value: stats.paymentsByMethod["Cash"] || 0 },
-    { name: "Astrology", value: stats.paymentsByMethod["Bank Transfer"] || 0 },
-    { name: "Pooja", value: stats.paymentsByMethod["UPI"] || 0 }
-  ];
-
-  const paymentMethodData = Object.entries(stats.paymentsByMethod).map(
-    ([method, amount]) => ({
-      name: method,
-      amount
-    })
-  ).filter(item => item.amount > 0);
-
-  // Colors for pie chart
-  const COLORS = ['#9b87f5', '#8B5CF6', '#7E69AB', '#6E59A5'];
+  // Colors for charts
+  const COLORS = ['#9b87f5', '#8B5CF6', '#7E69AB', '#6E59A5', '#5D49A3'];
 
   // Generate monthly data from actual payments
   const generateMonthlyData = () => {
@@ -74,6 +60,14 @@ const FinancialReports = () => {
     
     // Aggregate actual payments by month
     students.forEach(student => {
+      const startDate = new Date(student.startDate);
+      const startYear = startDate.getFullYear();
+      const startMonth = startDate.getMonth();
+      
+      if (startYear === currentYear) {
+        monthlyData[startMonth].amount += student.payment;
+      }
+      
       student.paymentHistory.forEach(payment => {
         const paymentDate = new Date(payment.date);
         const paymentYear = paymentDate.getFullYear();
@@ -88,6 +82,30 @@ const FinancialReports = () => {
     return monthlyData;
   };
 
+  // Generate class-wise revenue data
+  const generateClassTypeData = () => {
+    const classRevenue = {
+      "Ho'oponopo": 0,
+      "Astrology": 0,
+      "Pooja": 0
+    };
+    
+    students.forEach(student => {
+      if (student.classType in classRevenue) {
+        classRevenue[student.classType] += student.payment;
+      }
+      
+      student.paymentHistory.forEach(payment => {
+        const matchingStudent = students.find(s => s.id === payment.studentId);
+        if (matchingStudent && matchingStudent.classType in classRevenue) {
+          classRevenue[matchingStudent.classType] += payment.amount;
+        }
+      });
+    });
+    
+    return Object.entries(classRevenue).map(([name, value]) => ({ name, value }));
+  };
+
   // Get available years from the payment data
   const getAvailableYears = () => {
     const years = new Set<number>();
@@ -100,6 +118,9 @@ const FinancialReports = () => {
     
     // Add years from actual payment data
     students.forEach(student => {
+      const startYear = new Date(student.startDate).getFullYear();
+      years.add(startYear);
+      
       student.paymentHistory.forEach(payment => {
         const paymentYear = new Date(payment.date).getFullYear();
         years.add(paymentYear);
@@ -109,25 +130,53 @@ const FinancialReports = () => {
     return Array.from(years).sort((a, b) => b - a);
   };
 
-  // Generate student-wise payment data
-  const generateStudentPaymentData = () => {
-    return students
-      .map(student => {
-        const totalPayment = student.paymentHistory.reduce(
-          (sum, payment) => sum + payment.amount, 0
-        );
-        
-        return {
+  // Generate top 5 students by total revenue
+  const generateTopStudentsData = () => {
+    // Create a map to aggregate payments by student ID
+    const studentRevenue = new Map<string, {id: string, name: string, total: number}>();
+    
+    students.forEach(student => {
+      // Initialize or update with base payment
+      if (!studentRevenue.has(student.id)) {
+        studentRevenue.set(student.id, {
+          id: student.id,
           name: student.name,
-          amount: totalPayment
-        };
-      })
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 10); // Get top 10 students by payment
+          total: student.payment
+        });
+      } else {
+        const current = studentRevenue.get(student.id)!;
+        current.total += student.payment;
+      }
+      
+      // Add all payments from payment history
+      student.paymentHistory.forEach(payment => {
+        if (payment.studentId === student.id) {
+          const current = studentRevenue.get(student.id)!;
+          current.total += payment.amount;
+        }
+      });
+    });
+    
+    // Convert to array, sort by total, and take top 5
+    return Array.from(studentRevenue.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5)
+      .map(item => ({
+        name: item.name,
+        amount: item.total
+      }));
   };
 
   const monthlyData = generateMonthlyData();
-  const studentPaymentData = generateStudentPaymentData();
+  const classTypeData = generateClassTypeData();
+  const topStudentsData = generateTopStudentsData();
+  const paymentMethodData = Object.entries(stats.paymentsByMethod).map(
+    ([method, amount]) => ({
+      name: method,
+      amount
+    })
+  ).filter(item => item.amount > 0);
+  
   const availableYears = getAvailableYears();
 
   // Calculate total revenue including opening balance
@@ -182,10 +231,10 @@ const FinancialReports = () => {
       <Tabs defaultValue="monthly" className="mb-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
           <TabsList>
-            <TabsTrigger value="monthly">Monthly Overview</TabsTrigger>
-            <TabsTrigger value="student">Student-wise</TabsTrigger>
-            <TabsTrigger value="class">Class-wise</TabsTrigger>
-            <TabsTrigger value="method">Payment Method</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly Revenue</TabsTrigger>
+            <TabsTrigger value="class">Class Revenue</TabsTrigger>
+            <TabsTrigger value="students">Top 5 Students</TabsTrigger>
+            <TabsTrigger value="method">Payment Methods</TabsTrigger>
           </TabsList>
           
           <div className="mt-4 md:mt-0">
@@ -215,27 +264,10 @@ const FinancialReports = () => {
                   <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                    <YAxis tickFormatter={(value) => `₹${value.toLocaleString()}`} />
+                    <Tooltip formatter={(value) => [`₹${(value as number).toLocaleString()}`, 'Revenue']} />
                     <Legend />
-                    <Bar dataKey="amount" fill="#9b87f5" name="Revenue" />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="student">
-              {isLoading ? (
-                <div className="h-80 bg-gray-100 animate-pulse rounded" />
-              ) : (
-                <ResponsiveContainer width="100%" height={400}>
-                  <BarChart layout="vertical" data={studentPaymentData} margin={{ top: 20, right: 30, left: 70, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={60} />
-                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                    <Legend />
-                    <Bar dataKey="amount" fill="#8B5CF6" name="Total Payment" />
+                    <Bar dataKey="amount" fill="#9b87f5" name="Monthly Revenue" />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -250,46 +282,61 @@ const FinancialReports = () => {
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie
-                          data={Object.entries(stats.paymentsByMethod).map(([name, value]) => ({ name, value }))}
+                          data={classTypeData}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
                           outerRadius={100}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, value }) => `${name}: ₹${value.toLocaleString()}`}
                         >
-                          {Object.keys(stats.paymentsByMethod).map((_, index) => (
+                          {classTypeData.map((_, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => [formatCurrency(value as number), 'Payment']} />
+                        <Tooltip formatter={(value) => [`₹${(value as number).toLocaleString()}`, 'Revenue']} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                   
                   <div className="w-full md:w-1/2 pt-6">
-                    <h3 className="text-lg font-semibold mb-4 text-center">Payment Distribution</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-center">Class Revenue Distribution</h3>
                     <div className="space-y-4">
-                      {Object.entries(stats.paymentsByMethod)
-                        .filter(([_, value]) => value > 0)
-                        .map(([name, value], index) => (
-                          <div key={index} className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div
-                                className="w-4 h-4 mr-2 rounded-full"
-                                style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                              />
-                              <span className="text-sm">{name}</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm font-medium">{formatCurrency(value)}</span>
-                            </div>
+                      {classTypeData.map((entry, index) => (
+                        <div key={index} className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div
+                              className="w-4 h-4 mr-2 rounded-full"
+                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            />
+                            <span className="text-sm">{entry.name}</span>
                           </div>
-                        ))}
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium">₹{entry.value.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="students">
+              {isLoading ? (
+                <div className="h-80 bg-gray-100 animate-pulse rounded" />
+              ) : (
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart layout="vertical" data={topStudentsData} margin={{ top: 20, right: 30, left: 70, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" tickFormatter={(value) => `₹${value.toLocaleString()}`} />
+                    <YAxis dataKey="name" type="category" width={120} />
+                    <Tooltip formatter={(value) => [`₹${(value as number).toLocaleString()}`, 'Total Revenue']} />
+                    <Legend />
+                    <Bar dataKey="amount" fill="#8B5CF6" name="Student Revenue" />
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </TabsContent>
             
@@ -301,8 +348,8 @@ const FinancialReports = () => {
                   <BarChart data={paymentMethodData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                    <YAxis tickFormatter={(value) => `₹${value.toLocaleString()}`} />
+                    <Tooltip formatter={(value) => [`₹${(value as number).toLocaleString()}`, 'Amount']} />
                     <Legend />
                     <Bar dataKey="amount" fill="#7E69AB" name="Payment Amount" />
                   </BarChart>
@@ -357,3 +404,4 @@ const FinancialReports = () => {
 };
 
 export default FinancialReports;
+
