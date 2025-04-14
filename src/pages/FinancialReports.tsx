@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { calculateFinancialSummary } from "@/utils/mockData";
 import { formatCurrency } from "@/utils/formatters";
@@ -45,9 +46,9 @@ const FinancialReports = () => {
 
   // Prepare data for charts with payment amounts instead of student count
   const classTypeData = [
-    { name: "Ho'oponopo", value: stats.studentCounts["Ho'oponopo"] },
-    { name: "Astrology", value: stats.studentCounts["Astrology"] },
-    { name: "Pooja", value: stats.studentCounts["Pooja"] }
+    { name: "Ho'oponopo", value: stats.paymentsByMethod["Cash"] || 0 },
+    { name: "Astrology", value: stats.paymentsByMethod["Bank Transfer"] || 0 },
+    { name: "Pooja", value: stats.paymentsByMethod["UPI"] || 0 }
   ];
 
   const paymentMethodData = Object.entries(stats.paymentsByMethod).map(
@@ -153,7 +154,7 @@ const FinancialReports = () => {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-teacher-600">{formatCurrency(totalRevenueWithOpeningBalance)}</p>
-            <p className="text-sm text-gray-500">All-time revenue</p>
+            <p className="text-sm text-gray-500">Including opening balance ₹{formatCurrency(OPENING_BALANCE)}</p>
           </CardContent>
         </Card>
         
@@ -249,7 +250,7 @@ const FinancialReports = () => {
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie
-                          data={classTypeData}
+                          data={Object.entries(stats.paymentsByMethod).map(([name, value]) => ({ name, value }))}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
@@ -258,32 +259,34 @@ const FinancialReports = () => {
                           dataKey="value"
                           label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         >
-                          {classTypeData.map((entry, index) => (
+                          {Object.keys(stats.paymentsByMethod).map((_, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => [value, 'Students']} />
+                        <Tooltip formatter={(value) => [formatCurrency(value as number), 'Payment']} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                   
                   <div className="w-full md:w-1/2 pt-6">
-                    <h3 className="text-lg font-semibold mb-4 text-center">Class Distribution</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-center">Payment Distribution</h3>
                     <div className="space-y-4">
-                      {classTypeData.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div
-                              className="w-4 h-4 mr-2 rounded-full"
-                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                            />
-                            <span className="text-sm">{item.name}</span>
+                      {Object.entries(stats.paymentsByMethod)
+                        .filter(([_, value]) => value > 0)
+                        .map(([name, value], index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div
+                                className="w-4 h-4 mr-2 rounded-full"
+                                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                              />
+                              <span className="text-sm">{name}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm font-medium">{formatCurrency(value)}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">{item.value} students</span>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   </div>
                 </div>
