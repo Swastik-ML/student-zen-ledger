@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Student, Payment, ClassType, PaymentMethod } from "@/utils/types";
 
@@ -49,7 +48,9 @@ export async function fetchStudents(): Promise<Student[]> {
         paymentMethod: student.payment_method as PaymentMethod,
         classType: student.class_type as ClassType,
         pictureUrl: student.picture_url,
-        paymentHistory: studentPayments
+        paymentHistory: studentPayments,
+        classTime: student.class_time,
+        classSection: student.class_section
       };
     });
 
@@ -78,7 +79,9 @@ export async function createStudent(student: Omit<Student, 'id' | 'paymentHistor
       payment: student.payment,
       payment_method: student.paymentMethod,
       class_type: student.classType,
-      picture_url: student.pictureUrl
+      picture_url: student.pictureUrl,
+      class_time: student.classTime,
+      class_section: student.classSection
     });
     
     const { data, error } = await supabase
@@ -92,7 +95,9 @@ export async function createStudent(student: Omit<Student, 'id' | 'paymentHistor
         payment: student.payment,
         payment_method: student.paymentMethod,
         class_type: student.classType,
-        picture_url: student.pictureUrl
+        picture_url: student.pictureUrl,
+        class_time: student.classTime,
+        class_section: student.classSection
       })
       .select()
       .single();
@@ -116,7 +121,9 @@ export async function createStudent(student: Omit<Student, 'id' | 'paymentHistor
       paymentMethod: data.payment_method as PaymentMethod,
       classType: data.class_type as ClassType,
       pictureUrl: data.picture_url,
-      paymentHistory: []
+      paymentHistory: [],
+      classTime: data.class_time,
+      classSection: data.class_section
     };
   } catch (error) {
     console.error('Error in createStudent:', error);
@@ -143,7 +150,9 @@ export async function updateStudent(student: Student): Promise<Student> {
       payment: student.payment,
       payment_method: student.paymentMethod,
       class_type: student.classType,
-      picture_url: student.pictureUrl
+      picture_url: student.pictureUrl,
+      class_time: student.classTime,
+      class_section: student.classSection
     });
     
     const { data, error } = await supabase
@@ -157,7 +166,9 @@ export async function updateStudent(student: Student): Promise<Student> {
         payment: student.payment,
         payment_method: student.paymentMethod,
         class_type: student.classType,
-        picture_url: student.pictureUrl
+        picture_url: student.pictureUrl,
+        class_time: student.classTime,
+        class_section: student.classSection
       })
       .eq('id', student.id)
       .select()
@@ -182,7 +193,9 @@ export async function updateStudent(student: Student): Promise<Student> {
       paymentMethod: data.payment_method as PaymentMethod,
       classType: data.class_type as ClassType,
       pictureUrl: data.picture_url,
-      paymentHistory: student.paymentHistory
+      paymentHistory: student.paymentHistory,
+      classTime: data.class_time,
+      classSection: data.class_section
     };
   } catch (error) {
     console.error('Error in updateStudent:', error);

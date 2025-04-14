@@ -46,6 +46,8 @@ export type Database = {
       }
       students: {
         Row: {
+          class_section: string | null
+          class_time: string | null
           class_type: string
           created_at: string
           end_date: string | null
@@ -59,6 +61,8 @@ export type Database = {
           student_id: string
         }
         Insert: {
+          class_section?: string | null
+          class_time?: string | null
           class_type: string
           created_at?: string
           end_date?: string | null
@@ -72,6 +76,8 @@ export type Database = {
           student_id: string
         }
         Update: {
+          class_section?: string | null
+          class_time?: string | null
           class_type?: string
           created_at?: string
           end_date?: string | null

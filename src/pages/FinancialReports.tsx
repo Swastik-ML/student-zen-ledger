@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { calculateFinancialSummary } from "@/utils/mockData";
 import { formatCurrency } from "@/utils/formatters";
@@ -11,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Student } from "@/utils/types";
 import { fetchStudents } from "@/services/studentService";
 import { useToast } from "@/components/ui/use-toast";
+
+export const OPENING_BALANCE = 1027277; // Static opening balance for 2022-2024
 
 const FinancialReports = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -42,7 +43,7 @@ const FinancialReports = () => {
   // Calculate financial stats based on real data
   const stats = calculateFinancialSummary(students);
 
-  // Prepare data for charts
+  // Prepare data for charts with payment amounts instead of student count
   const classTypeData = [
     { name: "Ho'oponopo", value: stats.studentCounts["Ho'oponopo"] },
     { name: "Astrology", value: stats.studentCounts["Astrology"] },
@@ -128,6 +129,9 @@ const FinancialReports = () => {
   const studentPaymentData = generateStudentPaymentData();
   const availableYears = getAvailableYears();
 
+  // Calculate total revenue including opening balance
+  const totalRevenueWithOpeningBalance = stats.totalRevenue + OPENING_BALANCE;
+
   return (
     <div className="container py-8">
       <div className="flex items-center justify-between mb-8">
@@ -148,7 +152,7 @@ const FinancialReports = () => {
             <CardTitle className="text-lg text-gray-500">Total Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-teacher-600">{formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-3xl font-bold text-teacher-600">{formatCurrency(totalRevenueWithOpeningBalance)}</p>
             <p className="text-sm text-gray-500">All-time revenue</p>
           </CardContent>
         </Card>

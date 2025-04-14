@@ -1,4 +1,3 @@
-
 export type ClassType = 'Ho\'oponopo' | 'Astrology' | 'Pooja';
 
 export type PaymentMethod = 'Cash' | 'Bank Transfer' | 'UPI' | 'Check' | 'Other';
@@ -15,6 +14,8 @@ export interface Student {
   classType: ClassType;
   pictureUrl: string | null;
   paymentHistory: Payment[];
+  classTime?: string | null;
+  classSection?: string | null;
 }
 
 export interface Payment {

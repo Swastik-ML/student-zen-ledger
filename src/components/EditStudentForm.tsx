@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { 
@@ -36,6 +35,8 @@ const EditStudentForm = ({ student, onComplete, onCancel }: EditStudentFormProps
       classType: student.classType,
       payment: student.payment.toString(),
       paymentMethod: student.paymentMethod,
+      classTime: student.classTime || "",
+      classSection: student.classSection || "",
     }
   });
 
@@ -54,6 +55,8 @@ const EditStudentForm = ({ student, onComplete, onCancel }: EditStudentFormProps
         classType: formData.classType as ClassType,
         payment: parseFloat(formData.payment),
         paymentMethod: formData.paymentMethod as PaymentMethod,
+        classTime: formData.classTime || null,
+        classSection: formData.classSection || null,
       };
       
       // Call service to update student
@@ -207,6 +210,34 @@ const EditStudentForm = ({ student, onComplete, onCancel }: EditStudentFormProps
             )}
           />
         </div>
+        
+        <FormField
+          control={form.control}
+          name="classTime"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Class Time</FormLabel>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="classSection"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Class Section</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
