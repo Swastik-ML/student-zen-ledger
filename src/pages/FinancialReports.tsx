@@ -182,6 +182,77 @@ const FinancialReports = () => {
   // Calculate total revenue including opening balance
   const totalRevenueWithOpeningBalance = stats.totalRevenue + OPENING_BALANCE;
 
+  // Check if data exists for selected year
+  const hasDataForYear = () => {
+    const currentYear = parseInt(selectedYear);
+    
+    // Check if there are any students who started in the selected year
+    const hasStudentStartsInYear = students.some(student => {
+      const startDate = new Date(student.startDate);
+      return startDate.getFullYear() === currentYear;
+    });
+    
+    // Check if there are any payments in the selected year
+    const hasPaymentsInYear = students.some(student => {
+      return student.paymentHistory.some(payment => {
+        const paymentDate = new Date(payment.date);
+        return paymentDate.getFullYear() === currentYear;
+      });
+    });
+    
+    return hasStudentStartsInYear || hasPaymentsInYear;
+  };
+
+  // Function to export data as CSV
+  const exportReportData = () => {
+    // Get the selected year's data
+    const yearData = generateMonthlyData();
+    const classData = generateClassTypeData();
+    const studentsData = generateTopStudentsData();
+    const methodData = paymentMethodData;
+    
+    // Create CSV content
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    // Add monthly revenue data
+    csvContent += "Monthly Revenue Data\r\n";
+    csvContent += "Month,Amount\r\n";
+    yearData.forEach(item => {
+      csvContent += `${item.name},${item.amount}\r\n`;
+    });
+    
+    csvContent += "\r\nClass Revenue Data\r\n";
+    csvContent += "Class Type,Revenue\r\n";
+    classData.forEach(item => {
+      csvContent += `${item.name},${item.value}\r\n`;
+    });
+    
+    csvContent += "\r\nTop Students Data\r\n";
+    csvContent += "Student Name,Total Revenue\r\n";
+    studentsData.forEach(item => {
+      csvContent += `${item.name},${item.amount}\r\n`;
+    });
+    
+    csvContent += "\r\nPayment Method Data\r\n";
+    csvContent += "Method,Amount\r\n";
+    methodData.forEach(item => {
+      csvContent += `${item.name},${item.amount}\r\n`;
+    });
+    
+    // Create download link
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `financial_report_${selectedYear}.csv`);
+    document.body.appendChild(link);
+    
+    // Trigger download
+    link.click();
+    
+    // Clean up
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="container py-8">
       <div className="flex items-center justify-between mb-8">
@@ -190,9 +261,9 @@ const FinancialReports = () => {
           <h1 className="text-3xl font-bold text-teacher-700">Financial Reports</h1>
         </div>
         
-        <Button className="flex items-center gap-1">
+        <Button className="flex items-center gap-1" onClick={exportReportData}>
           <Download className="h-4 w-4" />
-          Export Report
+          Export {selectedYear} Report
         </Button>
       </div>
       
@@ -259,6 +330,10 @@ const FinancialReports = () => {
             <TabsContent value="monthly">
               {isLoading ? (
                 <div className="h-80 bg-gray-100 animate-pulse rounded" />
+              ) : !hasDataForYear() ? (
+                <div className="h-80 flex items-center justify-center">
+                  <p className="text-gray-500">No data available for {selectedYear}</p>
+                </div>
               ) : (
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -276,6 +351,10 @@ const FinancialReports = () => {
             <TabsContent value="class">
               {isLoading ? (
                 <div className="h-80 bg-gray-100 animate-pulse rounded" />
+              ) : !hasDataForYear() ? (
+                <div className="h-80 flex items-center justify-center">
+                  <p className="text-gray-500">No data available for {selectedYear}</p>
+                </div>
               ) : (
                 <div className="flex flex-col md:flex-row">
                   <div className="w-full md:w-1/2">
@@ -326,6 +405,10 @@ const FinancialReports = () => {
             <TabsContent value="students">
               {isLoading ? (
                 <div className="h-80 bg-gray-100 animate-pulse rounded" />
+              ) : !hasDataForYear() ? (
+                <div className="h-80 flex items-center justify-center">
+                  <p className="text-gray-500">No data available for {selectedYear}</p>
+                </div>
               ) : (
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart layout="vertical" data={topStudentsData} margin={{ top: 20, right: 30, left: 70, bottom: 5 }}>
@@ -343,6 +426,10 @@ const FinancialReports = () => {
             <TabsContent value="method">
               {isLoading ? (
                 <div className="h-80 bg-gray-100 animate-pulse rounded" />
+              ) : !hasDataForYear() ? (
+                <div className="h-80 flex items-center justify-center">
+                  <p className="text-gray-500">No data available for {selectedYear}</p>
+                </div>
               ) : (
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart data={paymentMethodData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -359,49 +446,8 @@ const FinancialReports = () => {
           </CardContent>
         </Card>
       </Tabs>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="h-40 bg-gray-100 animate-pulse rounded" />
-          ) : students.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No payment data available.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-4">Student</th>
-                    <th className="text-left py-2 px-4">Date</th>
-                    <th className="text-left py-2 px-4">Amount</th>
-                    <th className="text-left py-2 px-4">Method</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.flatMap(student => 
-                    student.paymentHistory.map(payment => (
-                      <tr key={payment.id} className="border-b hover:bg-gray-50">
-                        <td className="py-2 px-4">{student.name}</td>
-                        <td className="py-2 px-4">{new Date(payment.date).toLocaleDateString()}</td>
-                        <td className="py-2 px-4">{formatCurrency(payment.amount)}</td>
-                        <td className="py-2 px-4">{payment.method}</td>
-                      </tr>
-                    ))
-                  ).slice(0, 10)}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 };
 
 export default FinancialReports;
-
