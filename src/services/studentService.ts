@@ -124,6 +124,72 @@ export async function createStudent(student: Omit<Student, 'id' | 'paymentHistor
   }
 }
 
+export async function updateStudent(student: Student): Promise<Student> {
+  try {
+    // Ensure all required fields are provided
+    if (!student.id || !student.name || !student.studentId || !student.startDate || 
+        !student.classType || !student.paymentMethod || student.payment === undefined || 
+        student.serialNumber === undefined) {
+      throw new Error('Missing required student fields for update');
+    }
+    
+    console.log('Updating student data:', {
+      id: student.id,
+      serial_number: student.serialNumber,
+      name: student.name,
+      student_id: student.studentId,
+      start_date: student.startDate,
+      end_date: student.endDate,
+      payment: student.payment,
+      payment_method: student.paymentMethod,
+      class_type: student.classType,
+      picture_url: student.pictureUrl
+    });
+    
+    const { data, error } = await supabase
+      .from('students')
+      .update({
+        serial_number: student.serialNumber,
+        name: student.name,
+        student_id: student.studentId,
+        start_date: student.startDate,
+        end_date: student.endDate,
+        payment: student.payment,
+        payment_method: student.paymentMethod,
+        class_type: student.classType,
+        picture_url: student.pictureUrl
+      })
+      .eq('id', student.id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating student:', error);
+      throw error;
+    }
+
+    console.log('Student updated successfully:', data);
+
+    // Preserve the payment history from the original student object
+    return {
+      id: data.id,
+      serialNumber: data.serial_number,
+      name: data.name,
+      studentId: data.student_id,
+      startDate: data.start_date,
+      endDate: data.end_date,
+      payment: data.payment,
+      paymentMethod: data.payment_method as PaymentMethod,
+      classType: data.class_type as ClassType,
+      pictureUrl: data.picture_url,
+      paymentHistory: student.paymentHistory
+    };
+  } catch (error) {
+    console.error('Error in updateStudent:', error);
+    throw error;
+  }
+}
+
 export async function createPayment(payment: Omit<Payment, 'id'>): Promise<Payment> {
   try {
     const { data, error } = await supabase

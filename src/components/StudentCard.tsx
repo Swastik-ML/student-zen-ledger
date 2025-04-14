@@ -4,6 +4,7 @@ import { formatCurrency, formatDate } from "@/utils/formatters";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { isStudentActive } from "@/utils/mockData";
 
 interface StudentCardProps {
   student: Student;
@@ -32,6 +33,8 @@ const StudentCard = ({ student }: StudentCardProps) => {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  const active = isStudentActive(student);
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
@@ -65,7 +68,7 @@ const StudentCard = ({ student }: StudentCardProps) => {
       <CardFooter className="bg-gray-50 px-4 py-2 flex justify-between items-center">
         <Badge className={getBadgeColor(student.classType)}>{student.classType}</Badge>
         <span className="text-xs text-gray-500">
-          {student.endDate ? "Completed" : "Active"}
+          {active ? "Active" : "Completed"}
         </span>
       </CardFooter>
     </Card>

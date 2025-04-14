@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Student, ClassType } from "@/utils/types";
-import { Search } from "lucide-react";
+import { Search, Pencil } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchStudents } from "@/services/studentService";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import EditStudentForm from "@/components/EditStudentForm";
 
 const MasterData = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -15,7 +17,9 @@ const MasterData = () => {
   const [error, setError] = useState<string | null>(null);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [classFilter, setClassFilter] = useState<string>("all"); // Changed default value to "all"
+  const [classFilter, setClassFilter] = useState<string>("all");
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,13 +52,30 @@ const MasterData = () => {
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
         student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesClass = classFilter === "all" || student.classType === classFilter; // Updated to match new value
+      const matchesClass = classFilter === "all" || student.classType === classFilter;
       
       return matchesSearch && matchesClass;
     });
     
     setFilteredStudents(result);
   }, [searchTerm, classFilter, students]);
+
+  const handleEditClick = (student: Student) => {
+    setSelectedStudent(student);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditComplete = (updatedStudent: Student) => {
+    // Update the students list with the edited student
+    setStudents(prevStudents => 
+      prevStudents.map(s => s.id === updatedStudent.id ? updatedStudent : s)
+    );
+    setIsEditDialogOpen(false);
+    toast({
+      title: "Student Updated",
+      description: "Student information has been successfully updated.",
+    });
+  };
 
   if (loading) {
     return (
@@ -125,6 +146,7 @@ const MasterData = () => {
               <TableHead>Class Type</TableHead>
               <TableHead>Payment</TableHead>
               <TableHead>Payment Method</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -138,11 +160,21 @@ const MasterData = () => {
                   <TableCell>{student.classType}</TableCell>
                   <TableCell>{student.payment}</TableCell>
                   <TableCell>{student.paymentMethod}</TableCell>
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleEditClick(student)}
+                      className="h-8 w-8"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                   {students.length === 0 ? "No students found in the database." : "No students match your search criteria."}
                 </TableCell>
               </TableRow>
@@ -150,6 +182,21 @@ const MasterData = () => {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Student Information</DialogTitle>
+          </DialogHeader>
+          {selectedStudent && (
+            <EditStudentForm 
+              student={selectedStudent} 
+              onComplete={handleEditComplete} 
+              onCancel={() => setIsEditDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

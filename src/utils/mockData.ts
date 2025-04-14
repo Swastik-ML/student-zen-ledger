@@ -1,133 +1,76 @@
 
-import { ClassType, Payment, PaymentMethod, Student } from "./types";
+import { Student, FinancialSummary } from "../utils/types";
 
-// Generate a random student ID
-const generateStudentId = (): string => {
-  return `STD-${Math.floor(10000 + Math.random() * 90000)}`;
-};
-
-// Generate payments for a student
-const generatePayments = (studentId: string, payment: number): Payment[] => {
-  const payments: Payment[] = [];
-  const methods: PaymentMethod[] = ['Cash', 'Bank Transfer', 'UPI', 'Check'];
+export const calculateFinancialSummary = (students: Student[]): FinancialSummary => {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
   
-  // Generate between 1-5 payments
-  const numPayments = Math.floor(1 + Math.random() * 5);
+  // Calculate counts for each class type
+  const studentCounts = {
+    "Ho'oponopo": 0,
+    "Astrology": 0,
+    "Pooja": 0
+  };
   
-  for (let i = 0; i < numPayments; i++) {
-    const paymentDate = new Date();
-    paymentDate.setMonth(paymentDate.getMonth() - i);
-    
-    payments.push({
-      id: `payment-${studentId}-${i}`,
-      studentId,
-      amount: payment,
-      date: paymentDate.toISOString().split('T')[0],
-      method: methods[Math.floor(Math.random() * methods.length)]
-    });
-  }
+  // Calculate payment totals by method
+  const paymentsByMethod = {
+    "Cash": 0,
+    "Bank Transfer": 0,
+    "UPI": 0,
+    "Check": 0,
+    "Other": 0
+  };
   
-  return payments;
-};
-
-// Sample profile pictures (placeholder URLs)
-const profilePictures = [
-  "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200&h=200",
-  "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&q=80&w=200&h=200",
-  "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=200&h=200",
-  "https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=200&h=200",
-  null
-];
-
-// Class types
-const classTypes: ClassType[] = ['Ho\'oponopo', 'Astrology', 'Pooja'];
-
-// Payment methods
-const paymentMethods: PaymentMethod[] = ['Cash', 'Bank Transfer', 'UPI', 'Check', 'Other'];
-
-// Generate sample students
-const generateStudents = (): Student[] => {
-  const students: Student[] = [];
-  
-  for (let i = 1; i <= 15; i++) {
-    const studentId = generateStudentId();
-    const payment = Math.floor(500 + Math.random() * 10000);
-    const classType = classTypes[Math.floor(Math.random() * classTypes.length)];
-    const paymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
-    
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - Math.floor(Math.random() * 12));
-    
-    const endDate = Math.random() > 0.7 
-      ? new Date(startDate.getTime() + (Math.random() * 30 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
-      : null;
-    
-    students.push({
-      id: `student-${i}`,
-      serialNumber: i,
-      name: `Student ${i}`,
-      studentId,
-      startDate: startDate.toISOString().split('T')[0],
-      endDate,
-      payment,
-      paymentMethod,
-      classType,
-      pictureUrl: profilePictures[Math.floor(Math.random() * profilePictures.length)],
-      paymentHistory: generatePayments(studentId, payment)
-    });
-  }
-  
-  return students;
-};
-
-// Export the mock data
-export const mockStudents = generateStudents();
-
-// Calculate financial summary
-export const calculateFinancialSummary = (students: Student[]) => {
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-  
+  // Calculate the financial summary
   let totalRevenue = 0;
   let monthlyRevenue = 0;
   let yearlyRevenue = 0;
   
-  const studentCounts = {
-    'Ho\'oponopo': 0,
-    'Astrology': 0,
-    'Pooja': 0
-  };
-  
-  const paymentsByMethod = {
-    'Cash': 0,
-    'Bank Transfer': 0,
-    'UPI': 0,
-    'Check': 0,
-    'Other': 0
-  };
-  
+  // Process all students
   students.forEach(student => {
-    // Count by class type
-    studentCounts[student.classType]++;
+    // Count students by class type
+    if (student.classType in studentCounts) {
+      studentCounts[student.classType]++;
+    }
     
-    // Process payment history
+    // Calculate total revenue from all fees
+    totalRevenue += student.payment;
+    
+    // Calculate payment totals by method
+    const studentPaymentMethod = student.paymentMethod;
+    if (studentPaymentMethod in paymentsByMethod) {
+      paymentsByMethod[studentPaymentMethod] += student.payment;
+    }
+    
+    // Check if student started this month
+    const studentStartDate = new Date(student.startDate);
+    if (studentStartDate.getMonth() === currentMonth && 
+        studentStartDate.getFullYear() === currentYear) {
+      monthlyRevenue += student.payment;
+    }
+    
+    // Check if student started this year
+    if (studentStartDate.getFullYear() === currentYear) {
+      yearlyRevenue += student.payment;
+    }
+    
+    // Add payment history revenue
     student.paymentHistory.forEach(payment => {
       const paymentDate = new Date(payment.date);
       totalRevenue += payment.amount;
       
-      // Count by payment method
-      paymentsByMethod[payment.method] += payment.amount;
-      
-      // Check if payment is from current month
       if (paymentDate.getMonth() === currentMonth && 
           paymentDate.getFullYear() === currentYear) {
         monthlyRevenue += payment.amount;
       }
       
-      // Check if payment is from current year
       if (paymentDate.getFullYear() === currentYear) {
         yearlyRevenue += payment.amount;
+      }
+      
+      if (payment.method in paymentsByMethod) {
+        paymentsByMethod[payment.method] += payment.amount;
       }
     });
   });
@@ -139,4 +82,13 @@ export const calculateFinancialSummary = (students: Student[]) => {
     studentCounts,
     paymentsByMethod
   };
+};
+
+// Helper function to determine if a student is active
+export const isStudentActive = (student: Student): boolean => {
+  if (!student.endDate) return true;
+  
+  const now = new Date();
+  const endDate = new Date(student.endDate);
+  return endDate >= now;
 };

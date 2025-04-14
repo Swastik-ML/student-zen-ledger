@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import StudentCard from "@/components/StudentCard";
 import RecentPayments from "@/components/RecentPayments";
 import FinancialSummary from "@/components/FinancialSummary";
-import { calculateFinancialSummary } from "@/utils/mockData";
+import { calculateFinancialSummary, isStudentActive } from "@/utils/mockData";
 import { Student } from "@/utils/types";
 import { BookOpen, Users, IndianRupee } from "lucide-react";
 import { fetchStudents } from "@/services/studentService";
@@ -38,8 +38,8 @@ const Index = () => {
   // Calculate summary statistics
   const stats = calculateFinancialSummary(students);
   
-  // Get active students (no end date)
-  const activeStudents = students.filter(student => !student.endDate);
+  // Get active students (no end date or end date in future)
+  const activeStudents = students.filter(student => isStudentActive(student));
 
   return (
     <div className="container py-8">
@@ -72,8 +72,8 @@ const Index = () => {
             <IndianRupee className="w-6 h-6 text-teacher-500" />
           </div>
           <div>
-            <p className="mb-2 text-sm font-medium text-gray-600">Revenue (Monthly)</p>
-            <p className="text-2xl font-semibold text-gray-700">₹{stats.monthlyRevenue.toLocaleString()}</p>
+            <p className="mb-2 text-sm font-medium text-gray-600">Total Payments</p>
+            <p className="text-2xl font-semibold text-gray-700">₹{stats.totalRevenue.toLocaleString()}</p>
           </div>
         </div>
       </div>
