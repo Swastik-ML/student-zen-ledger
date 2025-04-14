@@ -69,6 +69,18 @@ export async function createStudent(student: Omit<Student, 'id' | 'paymentHistor
       throw new Error('Missing required student fields');
     }
     
+    console.log('Inserting student data:', {
+      serial_number: student.serialNumber,
+      name: student.name,
+      student_id: student.studentId,
+      start_date: student.startDate,
+      end_date: student.endDate,
+      payment: student.payment,
+      payment_method: student.paymentMethod,
+      class_type: student.classType,
+      picture_url: student.pictureUrl
+    });
+    
     const { data, error } = await supabase
       .from('students')
       .insert({
@@ -89,6 +101,8 @@ export async function createStudent(student: Omit<Student, 'id' | 'paymentHistor
       console.error('Error creating student:', error);
       throw error;
     }
+
+    console.log('Student created successfully:', data);
 
     // Return the created student
     return {
