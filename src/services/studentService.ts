@@ -1,6 +1,10 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Student, Payment, ClassType, PaymentMethod } from "@/utils/types";
 
+/**
+ * Fetch all students with their payment history
+ */
 export async function fetchStudents(): Promise<Student[]> {
   try {
     const { data: studentsData, error: studentsError } = await supabase
@@ -61,6 +65,9 @@ export async function fetchStudents(): Promise<Student[]> {
   }
 }
 
+/**
+ * Create a new student record
+ */
 export async function createStudent(student: Omit<Student, 'id' | 'paymentHistory'>): Promise<Student> {
   try {
     // Ensure all required fields are provided
@@ -69,20 +76,6 @@ export async function createStudent(student: Omit<Student, 'id' | 'paymentHistor
         student.serialNumber === undefined) {
       throw new Error('Missing required student fields');
     }
-    
-    console.log('Inserting student data:', {
-      serial_number: student.serialNumber,
-      name: student.name,
-      student_id: student.studentId,
-      start_date: student.startDate,
-      end_date: student.endDate,
-      payment: student.payment,
-      payment_method: student.paymentMethod,
-      class_type: student.classType,
-      picture_url: student.pictureUrl,
-      class_time: student.classTime,
-      class_section: student.classSection
-    });
     
     const { data, error } = await supabase
       .from('students')
@@ -107,8 +100,6 @@ export async function createStudent(student: Omit<Student, 'id' | 'paymentHistor
       throw error;
     }
 
-    console.log('Student created successfully:', data);
-
     // Return the created student
     return {
       id: data.id,
@@ -131,6 +122,9 @@ export async function createStudent(student: Omit<Student, 'id' | 'paymentHistor
   }
 }
 
+/**
+ * Update an existing student record
+ */
 export async function updateStudent(student: Student): Promise<Student> {
   try {
     // Ensure all required fields are provided
@@ -139,21 +133,6 @@ export async function updateStudent(student: Student): Promise<Student> {
         student.serialNumber === undefined) {
       throw new Error('Missing required student fields for update');
     }
-    
-    console.log('Updating student data:', {
-      id: student.id,
-      serial_number: student.serialNumber,
-      name: student.name,
-      student_id: student.studentId,
-      start_date: student.startDate,
-      end_date: student.endDate,
-      payment: student.payment,
-      payment_method: student.paymentMethod,
-      class_type: student.classType,
-      picture_url: student.pictureUrl,
-      class_time: student.classTime,
-      class_section: student.classSection
-    });
     
     const { data, error } = await supabase
       .from('students')
@@ -168,7 +147,7 @@ export async function updateStudent(student: Student): Promise<Student> {
         class_type: student.classType,
         picture_url: student.pictureUrl,
         class_time: student.classTime,
-        class_section: student.classSection
+        class_section: student.class_section
       })
       .eq('id', student.id)
       .select()
@@ -178,8 +157,6 @@ export async function updateStudent(student: Student): Promise<Student> {
       console.error('Error updating student:', error);
       throw error;
     }
-
-    console.log('Student updated successfully:', data);
 
     // Preserve the payment history from the original student object
     return {
@@ -199,38 +176,6 @@ export async function updateStudent(student: Student): Promise<Student> {
     };
   } catch (error) {
     console.error('Error in updateStudent:', error);
-    throw error;
-  }
-}
-
-export async function createPayment(payment: Omit<Payment, 'id'>): Promise<Payment> {
-  try {
-    const { data, error } = await supabase
-      .from('payments')
-      .insert({
-        student_id: payment.studentId,
-        amount: payment.amount,
-        date: payment.date,
-        method: payment.method
-      })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error creating payment:', error);
-      throw error;
-    }
-
-    // Return the created payment
-    return {
-      id: data.id,
-      studentId: data.student_id,
-      amount: data.amount,
-      date: data.date,
-      method: data.method as PaymentMethod
-    };
-  } catch (error) {
-    console.error('Error in createPayment:', error);
     throw error;
   }
 }

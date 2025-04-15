@@ -6,17 +6,14 @@ import { BarChart3, Download } from "lucide-react";
 import { Student } from "@/utils/types";
 import { fetchStudents } from "@/services/studentService";
 import { useToast } from "@/components/ui/use-toast";
-import { 
-  getAvailableYears, 
-  exportReportData 
-} from "@/utils/financialUtils";
+import { exportReportData } from "@/utils/financialUtils";
 import RevenueCards from "@/components/financial/RevenueCards";
 import FinancialCharts from "@/components/financial/FinancialCharts";
+import { useAnalyticsFilters } from "@/hooks/useAnalyticsFilters";
 
 const FinancialReports = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const { toast } = useToast();
   
   useEffect(() => {
@@ -40,9 +37,16 @@ const FinancialReports = () => {
     loadStudents();
   }, [toast]);
   
+  // Use our custom hook for analytics filters
+  const {
+    selectedYear,
+    availableYears,
+    hasData,
+    setSelectedYear
+  } = useAnalyticsFilters(students);
+  
   // Calculate financial stats based on real data
   const stats = calculateFinancialSummary(students);
-  const availableYears = getAvailableYears(students);
 
   // Handle export button click
   const handleExportReport = () => {

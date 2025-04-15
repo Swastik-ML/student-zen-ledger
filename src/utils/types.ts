@@ -1,7 +1,13 @@
+
+// Class types supported by the application
 export type ClassType = 'Ho\'oponopo' | 'Astrology' | 'Pooja';
 
+// Payment methods supported by the application
 export type PaymentMethod = 'Cash' | 'Bank Transfer' | 'UPI' | 'Check' | 'Other';
 
+/**
+ * Represents a student in the system
+ */
 export interface Student {
   id: string;
   serialNumber: number;
@@ -18,6 +24,9 @@ export interface Student {
   classSection?: string | null;
 }
 
+/**
+ * Represents a payment record
+ */
 export interface Payment {
   id: string;
   studentId: string;
@@ -26,6 +35,9 @@ export interface Payment {
   method: PaymentMethod;
 }
 
+/**
+ * Financial summary for analytics
+ */
 export interface FinancialSummary {
   totalRevenue: number;
   monthlyRevenue: number;
@@ -36,4 +48,17 @@ export interface FinancialSummary {
   paymentsByMethod: {
     [key in PaymentMethod]: number;
   };
+}
+
+/**
+ * Period filter for analytics
+ */
+export type PeriodFilter = 'day' | 'week' | 'month' | 'year' | 'all';
+
+/**
+ * Chart data point
+ */
+export interface ChartDataPoint {
+  name: string;
+  value: number;
 }

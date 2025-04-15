@@ -4,13 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Student } from "@/utils/types";
-import { 
-  generateMonthlyData, 
-  generateClassTypeData, 
-  generateTopStudentsData,
-  hasDataForYear 
-} from "@/utils/financialUtils";
-import { calculateFinancialSummary } from "@/utils/mockData";
+import { hasDataForYear } from "@/utils/financialUtils";
+import { useAnalyticsFilters } from "@/hooks/useAnalyticsFilters";
 
 interface FinancialChartsProps {
   students: Student[];
@@ -30,18 +25,14 @@ const FinancialCharts = ({
   // Colors for charts
   const COLORS = ['#9b87f5', '#8B5CF6', '#7E69AB', '#6E59A5', '#5D49A3'];
 
-  // Get data for charts
-  const monthlyData = generateMonthlyData(students, selectedYear);
-  const classTypeData = generateClassTypeData(students);
-  const topStudentsData = generateTopStudentsData(students);
-  const stats = calculateFinancialSummary(students);
-  
-  const paymentMethodData = Object.entries(stats.paymentsByMethod).map(
-    ([method, amount]) => ({
-      name: method,
-      amount
-    })
-  ).filter(item => item.amount > 0);
+  // Get chart data from custom hook
+  const {
+    monthlyData,
+    classTypeData,
+    topStudentsData,
+    paymentMethodData,
+    hasData
+  } = useAnalyticsFilters(students);
 
   return (
     <Tabs defaultValue="monthly" className="mb-8">
@@ -75,7 +66,7 @@ const FinancialCharts = ({
           <TabsContent value="monthly">
             {isLoading ? (
               <div className="h-80 bg-gray-100 animate-pulse rounded" />
-            ) : !hasDataForYear(students, selectedYear) ? (
+            ) : !hasData ? (
               <div className="h-80 flex items-center justify-center">
                 <p className="text-gray-500">No data available for {selectedYear}</p>
               </div>
@@ -96,7 +87,7 @@ const FinancialCharts = ({
           <TabsContent value="class">
             {isLoading ? (
               <div className="h-80 bg-gray-100 animate-pulse rounded" />
-            ) : !hasDataForYear(students, selectedYear) ? (
+            ) : !hasData ? (
               <div className="h-80 flex items-center justify-center">
                 <p className="text-gray-500">No data available for {selectedYear}</p>
               </div>
@@ -150,7 +141,7 @@ const FinancialCharts = ({
           <TabsContent value="students">
             {isLoading ? (
               <div className="h-80 bg-gray-100 animate-pulse rounded" />
-            ) : !hasDataForYear(students, selectedYear) ? (
+            ) : !hasData ? (
               <div className="h-80 flex items-center justify-center">
                 <p className="text-gray-500">No data available for {selectedYear}</p>
               </div>
@@ -171,7 +162,7 @@ const FinancialCharts = ({
           <TabsContent value="method">
             {isLoading ? (
               <div className="h-80 bg-gray-100 animate-pulse rounded" />
-            ) : !hasDataForYear(students, selectedYear) ? (
+            ) : !hasData ? (
               <div className="h-80 flex items-center justify-center">
                 <p className="text-gray-500">No data available for {selectedYear}</p>
               </div>
