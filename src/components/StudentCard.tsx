@@ -35,6 +35,20 @@ const StudentCard = ({ student }: StudentCardProps) => {
     }
   };
 
+  // Format class time to 12-hour format with AM/PM
+  const formatClassTime = (time: string | undefined) => {
+    if (!time) return "";
+    
+    // Split the time string (e.g., "14:30") into hours and minutes
+    const [hours, minutes] = time.split(':').map(Number);
+    
+    // Convert to 12-hour format and determine AM/PM
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+    
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
+
   const active = isStudentActive(student);
 
   return (
@@ -63,7 +77,7 @@ const StudentCard = ({ student }: StudentCardProps) => {
               <Clock className="h-3 w-3 mr-1 text-gray-500" />
               <span className="text-gray-500">Class Time:</span>{" "}
               <span className="font-medium ml-1">
-                {student.classTime}
+                {formatClassTime(student.classTime)}
               </span>
             </div>
           )}

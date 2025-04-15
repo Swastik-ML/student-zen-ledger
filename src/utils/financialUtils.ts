@@ -142,17 +142,17 @@ export const calculateFinancialSummary = (students: Student[]) => {
   
   const paymentsByMethod: Record<string, number> = {};
   
+  // First, calculate total revenue from all students and their payments
   students.forEach(student => {
-    // Add student payment to total revenue
+    // Add initial payment to total revenue
     totalRevenue += student.payment;
     
-    // Calculate monthly revenue
+    // Calculate monthly and yearly revenue
     const startDate = new Date(student.startDate);
     if (startDate.getFullYear() === currentYear && startDate.getMonth() === currentMonth) {
       monthlyRevenue += student.payment;
     }
     
-    // Calculate yearly revenue
     if (startDate.getFullYear() === currentYear) {
       yearlyRevenue += student.payment;
     }

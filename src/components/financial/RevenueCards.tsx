@@ -11,6 +11,8 @@ interface RevenueCardsProps {
 
 const RevenueCards = ({ totalRevenue, monthlyRevenue, yearlyRevenue }: RevenueCardsProps) => {
   const totalRevenueWithOpeningBalance = totalRevenue + OPENING_BALANCE;
+  const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+  const currentYear = new Date().getFullYear();
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -20,7 +22,7 @@ const RevenueCards = ({ totalRevenue, monthlyRevenue, yearlyRevenue }: RevenueCa
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold text-teacher-600">{formatCurrency(totalRevenueWithOpeningBalance)}</p>
-          <p className="text-sm text-gray-500">Including opening balance ₹{formatCurrency(OPENING_BALANCE)}</p>
+          <p className="text-sm text-gray-500">Including opening balance {formatCurrency(OPENING_BALANCE)}</p>
         </CardContent>
       </Card>
       
@@ -30,7 +32,7 @@ const RevenueCards = ({ totalRevenue, monthlyRevenue, yearlyRevenue }: RevenueCa
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold text-teacher-600">{formatCurrency(monthlyRevenue)}</p>
-          <p className="text-sm text-gray-500">{new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()}</p>
+          <p className="text-sm text-gray-500">{currentMonth} {currentYear}</p>
         </CardContent>
       </Card>
       
@@ -40,7 +42,7 @@ const RevenueCards = ({ totalRevenue, monthlyRevenue, yearlyRevenue }: RevenueCa
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold text-teacher-600">{formatCurrency(yearlyRevenue)}</p>
-          <p className="text-sm text-gray-500">{new Date().getFullYear()}</p>
+          <p className="text-sm text-gray-500">{currentYear}</p>
         </CardContent>
       </Card>
     </div>

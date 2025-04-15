@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { calculateFinancialSummary, isStudentActive } from "@/utils/mockData";
+import { calculateFinancialSummary } from "@/utils/financialUtils";
 import { Student } from "@/utils/types";
 import { fetchStudents } from "@/services/studentService";
 import { useToast } from "@/components/ui/use-toast";
