@@ -147,7 +147,7 @@ export async function updateStudent(student: Student): Promise<Student> {
         class_type: student.classType,
         picture_url: student.pictureUrl,
         class_time: student.classTime,
-        class_section: student.class_section
+        class_section: student.classSection
       })
       .eq('id', student.id)
       .select()
