@@ -7,7 +7,6 @@ import { useToast } from "@/components/ui/use-toast";
 import StatsSummary from "@/components/dashboard/StatsSummary";
 import RecentStudentsSection from "@/components/dashboard/RecentStudentsSection";
 import FinancialSummary from "@/components/FinancialSummary";
-import RecentPayments from "@/components/RecentPayments";
 
 const Index = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -63,8 +62,6 @@ const Index = () => {
             yearlyRevenue={stats.yearlyRevenue}
             studentCounts={stats.studentCounts}
           />
-          
-          <RecentPayments students={students} />
         </div>
       </div>
     </div>

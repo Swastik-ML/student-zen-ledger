@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { isStudentActive } from "@/utils/mockData";
+import { Clock } from "lucide-react";
 
 interface StudentCardProps {
   student: Student;
@@ -57,6 +58,15 @@ const StudentCard = ({ student }: StudentCardProps) => {
             <span className="text-gray-500">Start Date:</span>{" "}
             <span className="font-medium">{formatDate(student.startDate)}</span>
           </div>
+          {student.classTime && (
+            <div className="text-sm mb-2 flex items-center">
+              <Clock className="h-3 w-3 mr-1 text-gray-500" />
+              <span className="text-gray-500">Class Time:</span>{" "}
+              <span className="font-medium ml-1">
+                {student.classTime}
+              </span>
+            </div>
+          )}
           <div className="text-sm">
             <span className="text-gray-500">Payment:</span>{" "}
             <span className="font-medium text-teacher-600">

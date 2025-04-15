@@ -124,6 +124,78 @@ export const generateTopStudentsData = (students: Student[]) => {
     }));
 };
 
+// Calculate financial summary with proper monthly and yearly revenue
+export const calculateFinancialSummary = (students: Student[]) => {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+  
+  let totalRevenue = 0;
+  let monthlyRevenue = 0;
+  let yearlyRevenue = 0;
+  
+  const studentCounts = {
+    "Ho'oponopo": 0,
+    "Astrology": 0,
+    "Pooja": 0
+  };
+  
+  const paymentsByMethod: Record<string, number> = {};
+  
+  students.forEach(student => {
+    // Add student payment to total revenue
+    totalRevenue += student.payment;
+    
+    // Calculate monthly revenue
+    const startDate = new Date(student.startDate);
+    if (startDate.getFullYear() === currentYear && startDate.getMonth() === currentMonth) {
+      monthlyRevenue += student.payment;
+    }
+    
+    // Calculate yearly revenue
+    if (startDate.getFullYear() === currentYear) {
+      yearlyRevenue += student.payment;
+    }
+    
+    // Count students by class type
+    if (student.classType in studentCounts && isStudentActive(student)) {
+      studentCounts[student.classType]++;
+    }
+    
+    // Count payments by method
+    const method = student.paymentMethod;
+    paymentsByMethod[method] = (paymentsByMethod[method] || 0) + student.payment;
+    
+    // Include payment history in calculations
+    student.paymentHistory.forEach(payment => {
+      totalRevenue += payment.amount;
+      
+      const paymentDate = new Date(payment.date);
+      // Monthly revenue
+      if (paymentDate.getFullYear() === currentYear && paymentDate.getMonth() === currentMonth) {
+        monthlyRevenue += payment.amount;
+      }
+      
+      // Yearly revenue
+      if (paymentDate.getFullYear() === currentYear) {
+        yearlyRevenue += payment.amount;
+      }
+      
+      // Count payments by method
+      const paymentMethod = payment.method;
+      paymentsByMethod[paymentMethod] = (paymentsByMethod[paymentMethod] || 0) + payment.amount;
+    });
+  });
+  
+  return {
+    totalRevenue,
+    monthlyRevenue,
+    yearlyRevenue,
+    studentCounts,
+    paymentsByMethod
+  };
+};
+
 // Check if data exists for selected year
 export const hasDataForYear = (students: Student[], selectedYear: string) => {
   const currentYear = parseInt(selectedYear);
@@ -201,7 +273,3 @@ export const exportReportData = (students: Student[], selectedYear: string) => {
   // Clean up
   document.body.removeChild(link);
 };
-
-// Import calculateFinancialSummary from mockData to re-export
-import { calculateFinancialSummary } from "./mockData";
-export { calculateFinancialSummary };

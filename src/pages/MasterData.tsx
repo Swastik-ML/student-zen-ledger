@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Student, ClassType } from "@/utils/types";
-import { Search, Pencil } from "lucide-react";
+import { Search, Pencil, Filter } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchStudents } from "@/services/studentService";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,9 +18,14 @@ const MasterData = () => {
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [classFilter, setClassFilter] = useState<string>("all");
+  const [studentIdFilter, setStudentIdFilter] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const { toast } = useToast();
+
+  // Track student ID occurrences
+  const [studentIdOccurrences, setStudentIdOccurrences] = useState<Record<string, number>>({});
+  const [uniqueStudentIds, setUniqueStudentIds] = useState<string[]>([]);
 
   useEffect(() => {
     const loadStudents = async () => {
@@ -30,6 +35,17 @@ const MasterData = () => {
         setStudents(data);
         setFilteredStudents(data);
         setLoading(false);
+
+        // Calculate student ID occurrences
+        const occurrences: Record<string, number> = {};
+        data.forEach(student => {
+          occurrences[student.studentId] = (occurrences[student.studentId] || 0) + 1;
+        });
+        setStudentIdOccurrences(occurrences);
+        
+        // Get unique student IDs
+        const uniqueIds = Array.from(new Set(data.map(student => student.studentId)));
+        setUniqueStudentIds(uniqueIds);
       } catch (err) {
         console.error("Error loading students:", err);
         setError("Failed to load students. Please try again later.");
@@ -46,7 +62,7 @@ const MasterData = () => {
   }, [toast]);
 
   useEffect(() => {
-    // Filter students based on search term and class filter
+    // Filter students based on search term, class filter, and student ID filter
     const result = students.filter(student => {
       const matchesSearch = searchTerm === "" || 
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -54,11 +70,13 @@ const MasterData = () => {
       
       const matchesClass = classFilter === "all" || student.classType === classFilter;
       
-      return matchesSearch && matchesClass;
+      const matchesStudentId = studentIdFilter === "" || student.studentId === studentIdFilter;
+      
+      return matchesSearch && matchesClass && matchesStudentId;
     });
     
     setFilteredStudents(result);
-  }, [searchTerm, classFilter, students]);
+  }, [searchTerm, classFilter, studentIdFilter, students]);
 
   const handleEditClick = (student: Student) => {
     setSelectedStudent(student);
@@ -129,6 +147,22 @@ const MasterData = () => {
               <SelectItem value="Ho'oponopo">Ho'oponopo</SelectItem>
               <SelectItem value="Astrology">Astrology</SelectItem>
               <SelectItem value="Pooja">Pooja</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="w-full md:w-64">
+          <Select value={studentIdFilter} onValueChange={setStudentIdFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by student ID" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Student IDs</SelectItem>
+              {uniqueStudentIds.map(id => (
+                <SelectItem key={id} value={id}>
+                  {id} {studentIdOccurrences[id] > 1 ? `(${studentIdOccurrences[id]} entries)` : ''}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
