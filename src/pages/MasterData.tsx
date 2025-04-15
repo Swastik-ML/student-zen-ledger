@@ -18,7 +18,7 @@ const MasterData = () => {
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [classFilter, setClassFilter] = useState<string>("all");
-  const [studentIdFilter, setStudentIdFilter] = useState<string>("");
+  const [studentIdFilter, setStudentIdFilter] = useState<string>("all");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const { toast } = useToast();
@@ -70,7 +70,7 @@ const MasterData = () => {
       
       const matchesClass = classFilter === "all" || student.classType === classFilter;
       
-      const matchesStudentId = studentIdFilter === "" || student.studentId === studentIdFilter;
+      const matchesStudentId = studentIdFilter === "all" || student.studentId === studentIdFilter;
       
       return matchesSearch && matchesClass && matchesStudentId;
     });
@@ -157,7 +157,7 @@ const MasterData = () => {
               <SelectValue placeholder="Filter by student ID" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Student IDs</SelectItem>
+              <SelectItem value="all">All Student IDs</SelectItem>
               {uniqueStudentIds.map(id => (
                 <SelectItem key={id} value={id}>
                   {id} {studentIdOccurrences[id] > 1 ? `(${studentIdOccurrences[id]} entries)` : ''}
