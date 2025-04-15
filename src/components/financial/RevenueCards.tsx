@@ -30,7 +30,7 @@ const RevenueCards = ({ totalRevenue, monthlyRevenue, yearlyRevenue }: RevenueCa
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold text-teacher-600">{formatCurrency(monthlyRevenue)}</p>
-          <p className="text-sm text-gray-500">Current month</p>
+          <p className="text-sm text-gray-500">{new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()}</p>
         </CardContent>
       </Card>
       
@@ -40,7 +40,7 @@ const RevenueCards = ({ totalRevenue, monthlyRevenue, yearlyRevenue }: RevenueCa
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold text-teacher-600">{formatCurrency(yearlyRevenue)}</p>
-          <p className="text-sm text-gray-500">Current year</p>
+          <p className="text-sm text-gray-500">{new Date().getFullYear()}</p>
         </CardContent>
       </Card>
     </div>

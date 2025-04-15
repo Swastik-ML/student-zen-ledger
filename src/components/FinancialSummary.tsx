@@ -30,6 +30,7 @@ const FinancialSummary = ({
             <p className="text-2xl font-bold text-teacher-700">
               {formatCurrency(monthlyRevenue)}
             </p>
+            <p className="text-xs text-gray-500">{new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()}</p>
           </div>
           
           <div className="bg-teacher-50 p-4 rounded-md">
@@ -37,6 +38,7 @@ const FinancialSummary = ({
             <p className="text-2xl font-bold text-teacher-700">
               {formatCurrency(yearlyRevenue)}
             </p>
+            <p className="text-xs text-gray-500">{new Date().getFullYear()}</p>
           </div>
           
           <div className="bg-teacher-50 p-4 rounded-md">

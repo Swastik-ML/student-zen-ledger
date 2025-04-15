@@ -168,15 +168,17 @@ export const calculateFinancialSummary = (students: Student[]) => {
     
     // Include payment history in calculations
     student.paymentHistory.forEach(payment => {
+      // Add payment to total revenue
       totalRevenue += payment.amount;
       
       const paymentDate = new Date(payment.date);
-      // Monthly revenue
+      
+      // Monthly revenue - include any payment made in the current month of the current year
       if (paymentDate.getFullYear() === currentYear && paymentDate.getMonth() === currentMonth) {
         monthlyRevenue += payment.amount;
       }
       
-      // Yearly revenue
+      // Yearly revenue - include any payment made in the current year
       if (paymentDate.getFullYear() === currentYear) {
         yearlyRevenue += payment.amount;
       }
