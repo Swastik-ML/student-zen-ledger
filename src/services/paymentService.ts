@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Payment, PaymentMethod } from "@/utils/types";
+import { Payment, PaymentMethod } from "@/types/student";
 
 /**
  * Create a new payment record
@@ -23,7 +23,7 @@ export async function createPayment(payment: Omit<Payment, 'id'>): Promise<Payme
       throw error;
     }
 
-    // Return the created payment
+    // Return the created payment with camelCase field names
     return {
       id: data.id,
       studentId: data.student_id,

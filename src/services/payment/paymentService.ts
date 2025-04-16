@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Payment } from "@/utils/types";
+import { Payment, PaymentMethod } from "@/types/student";
 
 /**
  * Fetch all payments from the database
@@ -15,7 +15,14 @@ export const fetchPayments = async (): Promise<Payment[]> => {
     throw new Error("Failed to fetch payments");
   }
 
-  return data || [];
+  // Transform the snake_case response to camelCase for our app types
+  return (data || []).map(item => ({
+    id: item.id,
+    studentId: item.student_id,
+    amount: item.amount,
+    date: item.date,
+    method: item.method as PaymentMethod
+  }));
 };
 
 /**
@@ -25,23 +32,36 @@ export const fetchPaymentsByStudentId = async (studentId: string): Promise<Payme
   const { data, error } = await supabase
     .from("payments")
     .select("*")
-    .eq("studentId", studentId);
+    .eq("student_id", studentId);
 
   if (error) {
     console.error(`Error fetching payments for student ${studentId}:`, error.message);
     throw new Error("Failed to fetch student payments");
   }
 
-  return data || [];
+  // Transform the snake_case response to camelCase for our app types
+  return (data || []).map(item => ({
+    id: item.id,
+    studentId: item.student_id,
+    amount: item.amount,
+    date: item.date,
+    method: item.method as PaymentMethod
+  }));
 };
 
 /**
  * Add a new payment record
  */
 export const addPayment = async (payment: Omit<Payment, "id">): Promise<Payment> => {
+  // Convert from our app's camelCase to DB's snake_case
   const { data, error } = await supabase
     .from("payments")
-    .insert(payment)
+    .insert({
+      student_id: payment.studentId,
+      amount: payment.amount,
+      date: payment.date,
+      method: payment.method
+    })
     .select()
     .single();
 
@@ -50,7 +70,14 @@ export const addPayment = async (payment: Omit<Payment, "id">): Promise<Payment>
     throw new Error("Failed to add payment");
   }
 
-  return data;
+  // Transform back to our app's type format
+  return {
+    id: data.id,
+    studentId: data.student_id,
+    amount: data.amount,
+    date: data.date,
+    method: data.method as PaymentMethod
+  };
 };
 
 /**
@@ -59,7 +86,12 @@ export const addPayment = async (payment: Omit<Payment, "id">): Promise<Payment>
 export const updatePayment = async (payment: Payment): Promise<Payment> => {
   const { data, error } = await supabase
     .from("payments")
-    .update(payment)
+    .update({
+      student_id: payment.studentId,
+      amount: payment.amount,
+      date: payment.date,
+      method: payment.method
+    })
     .eq("id", payment.id)
     .select()
     .single();
@@ -69,7 +101,14 @@ export const updatePayment = async (payment: Payment): Promise<Payment> => {
     throw new Error("Failed to update payment");
   }
 
-  return data;
+  // Transform back to our app's type format
+  return {
+    id: data.id,
+    studentId: data.student_id,
+    amount: data.amount,
+    date: data.date,
+    method: data.method as PaymentMethod
+  };
 };
 
 /**
