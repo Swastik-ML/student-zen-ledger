@@ -1,7 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { Student } from "@/utils/types";
-import { generateMonthlyData, generateClassTypeData, generateTopStudentsData, hasDataForYear, getAvailableYears } from "@/utils/financialUtils";
+import { 
+  generateMonthlyData, 
+  generateClassTypeData, 
+  generateTopStudentsData, 
+  hasDataForYear, 
+  getAvailableYears 
+} from "@/utils/financialUtils";
 
 interface AnalyticsFiltersResult {
   selectedYear: string;
