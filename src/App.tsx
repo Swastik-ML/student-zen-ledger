@@ -10,8 +10,8 @@ import MasterData from "./pages/MasterData";
 import FinancialReports from "./pages/FinancialReports";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
-import Navbar from "./components/Navbar";
-import ProtectedRoute from "./components/ProtectedRoute";
+import Navbar from "./components/layout/Navbar";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { useEffect } from "react";
 
 const queryClient = new QueryClient();

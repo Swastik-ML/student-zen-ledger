@@ -1,3 +1,3 @@
 
-export * from './studentService';
-export * from './paymentService';
+export * from './student/studentService';
+export * from './payment/paymentService';

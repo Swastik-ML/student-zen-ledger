@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/formatters";
-import { OPENING_BALANCE } from "@/utils/financialUtils";
+import { OPENING_BALANCE } from "@/utils/financial/financialUtils";
 
 interface RevenueCardsProps {
   totalRevenue: number;

@@ -1,10 +1,11 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import EditStudentForm from "@/components/EditStudentForm";
-import FilterBar from "@/components/master-data/FilterBar";
-import StudentTable from "@/components/master-data/StudentTable";
-import ExportMenu from "@/components/master-data/ExportMenu";
-import { useMasterData } from "@/hooks/useMasterData";
 import { Button } from "@/components/ui/button";
+import EditStudentForm from "@/components/student/EditStudentForm";
+import FilterBar from "@/components/student/master-data/FilterBar";
+import StudentTable from "@/components/student/master-data/StudentTable";
+import ExportMenu from "@/components/student/master-data/ExportMenu";
+import { useMasterData } from "@/hooks/student/useMasterData";
 
 const MasterData = () => {
   const {
