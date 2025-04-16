@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { calculateFinancialSummary } from "@/utils/mockData";
+import { calculateFinancialSummary } from "@/utils/financialUtils";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Download } from "lucide-react";
 import { Student } from "@/utils/types";
