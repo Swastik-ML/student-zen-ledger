@@ -1,4 +1,3 @@
-
 import { Student, Payment } from "./types";
 import { isStudentActive } from "./mockData";
 
