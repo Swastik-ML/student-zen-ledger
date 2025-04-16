@@ -252,9 +252,10 @@ const AddStudent = () => {
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
+                              date < new Date("1900-01-01")
                             }
                             initialFocus
+                            className={cn("p-3 pointer-events-auto")}
                           />
                         </PopoverContent>
                       </Popover>
@@ -297,6 +298,7 @@ const AddStudent = () => {
                               date < new Date("1900-01-01")
                             }
                             initialFocus
+                            className={cn("p-3 pointer-events-auto")}
                           />
                         </PopoverContent>
                       </Popover>

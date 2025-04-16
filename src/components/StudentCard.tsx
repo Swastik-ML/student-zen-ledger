@@ -4,7 +4,7 @@ import { formatCurrency, formatDate } from "@/utils/formatters";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { isStudentActive } from "@/utils/mockData";
+import { isStudentActive, isStudentUpcoming } from "@/utils/mockData";
 import { Clock } from "lucide-react";
 
 interface StudentCardProps {
@@ -36,7 +36,7 @@ const StudentCard = ({ student }: StudentCardProps) => {
   };
 
   // Format class time to 12-hour format with AM/PM
-  const formatClassTime = (time: string | undefined) => {
+  const formatClassTime = (time: string | undefined | null) => {
     if (!time) return "";
     
     // Split the time string (e.g., "14:30") into hours and minutes
@@ -50,6 +50,7 @@ const StudentCard = ({ student }: StudentCardProps) => {
   };
 
   const active = isStudentActive(student);
+  const upcoming = isStudentUpcoming(student);
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
@@ -91,9 +92,15 @@ const StudentCard = ({ student }: StudentCardProps) => {
       </CardContent>
       <CardFooter className="bg-gray-50 px-4 py-2 flex justify-between items-center">
         <Badge className={getBadgeColor(student.classType)}>{student.classType}</Badge>
-        <span className="text-xs text-gray-500">
-          {active ? "Active" : "Completed"}
-        </span>
+        {upcoming ? (
+          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+            Upcoming
+          </span>
+        ) : (
+          <span className="text-xs text-gray-500">
+            {active ? "Active" : "Completed"}
+          </span>
+        )}
       </CardFooter>
     </Card>
   );

@@ -5,11 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Student, ClassType } from "@/utils/types";
-import { Search, Pencil, Filter } from "lucide-react";
+import { Search, Pencil, Filter, Download, CalendarRange } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchStudents } from "@/services/studentService";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditStudentForm from "@/components/EditStudentForm";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { format } from "date-fns";
 
 const MasterData = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -18,14 +25,10 @@ const MasterData = () => {
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [classFilter, setClassFilter] = useState<string>("all");
-  const [studentIdFilter, setStudentIdFilter] = useState<string>("all");
+  const [studentIdFilter, setStudentIdFilter] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
   const { toast } = useToast();
-
-  // Track student ID occurrences
-  const [studentIdOccurrences, setStudentIdOccurrences] = useState<Record<string, number>>({});
-  const [uniqueStudentIds, setUniqueStudentIds] = useState<string[]>([]);
 
   useEffect(() => {
     const loadStudents = async () => {
@@ -35,17 +38,6 @@ const MasterData = () => {
         setStudents(data);
         setFilteredStudents(data);
         setLoading(false);
-
-        // Calculate student ID occurrences
-        const occurrences: Record<string, number> = {};
-        data.forEach(student => {
-          occurrences[student.studentId] = (occurrences[student.studentId] || 0) + 1;
-        });
-        setStudentIdOccurrences(occurrences);
-        
-        // Get unique student IDs
-        const uniqueIds = Array.from(new Set(data.map(student => student.studentId)));
-        setUniqueStudentIds(uniqueIds);
       } catch (err) {
         console.error("Error loading students:", err);
         setError("Failed to load students. Please try again later.");
@@ -65,12 +57,12 @@ const MasterData = () => {
     // Filter students based on search term, class filter, and student ID filter
     const result = students.filter(student => {
       const matchesSearch = searchTerm === "" || 
-        student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
+        student.name.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesClass = classFilter === "all" || student.classType === classFilter;
       
-      const matchesStudentId = studentIdFilter === "all" || student.studentId === studentIdFilter;
+      const matchesStudentId = studentIdFilter === "" || 
+        student.studentId.toLowerCase().includes(studentIdFilter.toLowerCase());
       
       return matchesSearch && matchesClass && matchesStudentId;
     });
@@ -93,6 +85,55 @@ const MasterData = () => {
       title: "Student Updated",
       description: "Student information has been successfully updated.",
     });
+  };
+
+  const exportData = (period: 'all' | 'year' | 'month') => {
+    let dataToExport = filteredStudents;
+    const currentDate = new Date();
+    let filename = 'student_data';
+
+    if (period === 'year') {
+      const currentYear = currentDate.getFullYear();
+      dataToExport = filteredStudents.filter(student => {
+        const startDate = new Date(student.startDate);
+        return startDate.getFullYear() === currentYear;
+      });
+      filename = `student_data_${currentYear}`;
+    } else if (period === 'month') {
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth();
+      dataToExport = filteredStudents.filter(student => {
+        const startDate = new Date(student.startDate);
+        return startDate.getFullYear() === currentYear && startDate.getMonth() === currentMonth;
+      });
+      filename = `student_data_${format(currentDate, 'MMM_yyyy')}`;
+    }
+
+    // Convert data to CSV format
+    const headers = ['Serial Number', 'Name', 'Student ID', 'Start Date', 'Class Type', 'Payment', 'Payment Method'];
+    const csvContent = [
+      headers.join(','),
+      ...dataToExport.map(student => [
+        student.serialNumber,
+        `"${student.name.replace(/"/g, '""')}"`, // Handle quotes in names
+        student.studentId,
+        new Date(student.startDate).toLocaleDateString(),
+        student.classType,
+        student.payment,
+        student.paymentMethod
+      ].join(','))
+    ].join('\n');
+    
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (loading) {
@@ -124,13 +165,35 @@ const MasterData = () => {
 
   return (
     <div className="container py-8">
-      <h1 className="text-2xl font-bold mb-6">Master Data</h1>
+      <div className="flex flex-col md:flex-row justify-between mb-6">
+        <h1 className="text-2xl font-bold mb-4 md:mb-0">Master Data</h1>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Export Data
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => exportData('all')}>
+              Full Data
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportData('year')}>
+              Current Year Data
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportData('month')}>
+              Current Month Data
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <Input 
-            placeholder="Search by name or student ID" 
+            placeholder="Search by name" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -151,20 +214,14 @@ const MasterData = () => {
           </Select>
         </div>
         
-        <div className="w-full md:w-64">
-          <Select value={studentIdFilter} onValueChange={setStudentIdFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by student ID" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Student IDs</SelectItem>
-              {uniqueStudentIds.map(id => (
-                <SelectItem key={id} value={id}>
-                  {id} {studentIdOccurrences[id] > 1 ? `(${studentIdOccurrences[id]} entries)` : ''}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Input 
+            placeholder="Search by student ID" 
+            value={studentIdFilter}
+            onChange={(e) => setStudentIdFilter(e.target.value)}
+            className="pl-10"
+          />
         </div>
       </div>
       

@@ -157,8 +157,9 @@ export const calculateFinancialSummary = (students: Student[]) => {
       yearlyRevenue += student.payment;
     }
     
-    // Count students by class type
-    if (student.classType in studentCounts && isStudentActive(student)) {
+    // Count students by class type (only consider active or upcoming students)
+    const isUpcomingOrActive = isStudentActive(student) || new Date(student.startDate) > currentDate;
+    if (student.classType in studentCounts && isUpcomingOrActive) {
       studentCounts[student.classType]++;
     }
     
