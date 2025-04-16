@@ -31,5 +31,6 @@ export interface Payment {
   method: PaymentMethod;
 }
 
-// Explicitly export PaymentMethod from common
-export { PaymentMethod } from "./common";
+// Explicitly export PaymentMethod from common using 'export type'
+export type { PaymentMethod } from "./common";
+
