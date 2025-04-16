@@ -7,7 +7,6 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Download } from "lucide-react";
-import { format } from "date-fns";
 
 interface ExportMenuProps {
   onExport: (period: 'all' | 'year' | 'month') => void;
