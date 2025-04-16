@@ -30,3 +30,6 @@ export interface Payment {
   date: string;
   method: PaymentMethod;
 }
+
+// Explicitly export PaymentMethod from common
+export { PaymentMethod } from "./common";
