@@ -1,140 +1,29 @@
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Student, ClassType } from "@/utils/types";
-import { Search, Pencil, Filter, Download, CalendarRange } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { fetchStudents } from "@/services/studentService";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditStudentForm from "@/components/EditStudentForm";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { format } from "date-fns";
+import FilterBar from "@/components/master-data/FilterBar";
+import StudentTable from "@/components/master-data/StudentTable";
+import ExportMenu from "@/components/master-data/ExportMenu";
+import { useMasterData } from "@/hooks/useMasterData";
 
 const MasterData = () => {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [classFilter, setClassFilter] = useState<string>("all");
-  const [studentIdFilter, setStudentIdFilter] = useState<string>("");
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const loadStudents = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchStudents();
-        setStudents(data);
-        setFilteredStudents(data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading students:", err);
-        setError("Failed to load students. Please try again later.");
-        setLoading(false);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load students. Please try again later."
-        });
-      }
-    };
-
-    loadStudents();
-  }, [toast]);
-
-  useEffect(() => {
-    // Filter students based on search term, class filter, and student ID filter
-    const result = students.filter(student => {
-      const matchesSearch = searchTerm === "" || 
-        student.name.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesClass = classFilter === "all" || student.classType === classFilter;
-      
-      const matchesStudentId = studentIdFilter === "" || 
-        student.studentId.toLowerCase().includes(studentIdFilter.toLowerCase());
-      
-      return matchesSearch && matchesClass && matchesStudentId;
-    });
-    
-    setFilteredStudents(result);
-  }, [searchTerm, classFilter, studentIdFilter, students]);
-
-  const handleEditClick = (student: Student) => {
-    setSelectedStudent(student);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleEditComplete = (updatedStudent: Student) => {
-    // Update the students list with the edited student
-    setStudents(prevStudents => 
-      prevStudents.map(s => s.id === updatedStudent.id ? updatedStudent : s)
-    );
-    setIsEditDialogOpen(false);
-    toast({
-      title: "Student Updated",
-      description: "Student information has been successfully updated.",
-    });
-  };
-
-  const exportData = (period: 'all' | 'year' | 'month') => {
-    let dataToExport = filteredStudents;
-    const currentDate = new Date();
-    let filename = 'student_data';
-
-    if (period === 'year') {
-      const currentYear = currentDate.getFullYear();
-      dataToExport = filteredStudents.filter(student => {
-        const startDate = new Date(student.startDate);
-        return startDate.getFullYear() === currentYear;
-      });
-      filename = `student_data_${currentYear}`;
-    } else if (period === 'month') {
-      const currentYear = currentDate.getFullYear();
-      const currentMonth = currentDate.getMonth();
-      dataToExport = filteredStudents.filter(student => {
-        const startDate = new Date(student.startDate);
-        return startDate.getFullYear() === currentYear && startDate.getMonth() === currentMonth;
-      });
-      filename = `student_data_${format(currentDate, 'MMM_yyyy')}`;
-    }
-
-    // Convert data to CSV format
-    const headers = ['Serial Number', 'Name', 'Student ID', 'Start Date', 'Class Type', 'Payment', 'Payment Method'];
-    const csvContent = [
-      headers.join(','),
-      ...dataToExport.map(student => [
-        student.serialNumber,
-        `"${student.name.replace(/"/g, '""')}"`, // Handle quotes in names
-        student.studentId,
-        new Date(student.startDate).toLocaleDateString(),
-        student.classType,
-        student.payment,
-        student.paymentMethod
-      ].join(','))
-    ].join('\n');
-    
-    // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${filename}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const {
+    loading,
+    error,
+    filteredStudents,
+    searchTerm,
+    setSearchTerm,
+    classFilter,
+    setClassFilter,
+    studentIdFilter,
+    setStudentIdFilter,
+    selectedStudent,
+    isEditDialogOpen,
+    setIsEditDialogOpen,
+    handleEditClick,
+    handleEditComplete,
+    exportData
+  } = useMasterData();
 
   if (loading) {
     return (
@@ -167,112 +56,22 @@ const MasterData = () => {
     <div className="container py-8">
       <div className="flex flex-col md:flex-row justify-between mb-6">
         <h1 className="text-2xl font-bold mb-4 md:mb-0">Master Data</h1>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Export Data
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => exportData('all')}>
-              Full Data
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => exportData('year')}>
-              Current Year Data
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => exportData('month')}>
-              Current Month Data
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ExportMenu onExport={exportData} />
       </div>
       
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <Input 
-            placeholder="Search by name" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <div className="w-full md:w-64">
-          <Select value={classFilter} onValueChange={setClassFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by class" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Classes</SelectItem>
-              <SelectItem value="Ho'oponopo">Ho'oponopo</SelectItem>
-              <SelectItem value="Astrology">Astrology</SelectItem>
-              <SelectItem value="Pooja">Pooja</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="relative w-full md:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <Input 
-            placeholder="Search by student ID" 
-            value={studentIdFilter}
-            onChange={(e) => setStudentIdFilter(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+      <FilterBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        classFilter={classFilter}
+        setClassFilter={setClassFilter}
+        studentIdFilter={studentIdFilter}
+        setStudentIdFilter={setStudentIdFilter}
+      />
       
-      <div className="rounded-md border">
-        <Table>
-          <TableCaption>List of all registered students</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>S.No</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Student ID</TableHead>
-              <TableHead>Start Date</TableHead>
-              <TableHead>Class Type</TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead>Payment Method</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredStudents.length > 0 ? (
-              filteredStudents.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell>{student.serialNumber}</TableCell>
-                  <TableCell className="font-medium">{student.name}</TableCell>
-                  <TableCell>{student.studentId}</TableCell>
-                  <TableCell>{new Date(student.startDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{student.classType}</TableCell>
-                  <TableCell>{student.payment}</TableCell>
-                  <TableCell>{student.paymentMethod}</TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleEditClick(student)}
-                      className="h-8 w-8"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                  {students.length === 0 ? "No students found in the database." : "No students match your search criteria."}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <StudentTable 
+        students={filteredStudents} 
+        onEditClick={handleEditClick} 
+      />
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-lg">
