@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import AddStudent from "./pages/AddStudent";
 import MasterData from "./pages/MasterData";
 import FinancialReports from "./pages/FinancialReports";
+import ActiveStudents from "./pages/ActiveStudents";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Navbar from "./components/layout/Navbar";
@@ -83,6 +84,19 @@ const App = () => {
                     <Navbar />
                     <main className="flex-1 bg-gray-50">
                       <FinancialReports />
+                    </main>
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/active-students"
+              element={
+                <ProtectedRoute>
+                  <div className="flex flex-col min-h-screen">
+                    <Navbar />
+                    <main className="flex-1 bg-gray-50">
+                      <ActiveStudents />
                     </main>
                   </div>
                 </ProtectedRoute>

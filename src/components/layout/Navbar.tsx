@@ -1,6 +1,6 @@
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { BookOpen, FilePlus, BarChart3, FileText, LogOut } from "lucide-react";
+import { BookOpen, FilePlus, BarChart3, FileText, LogOut, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/ui/use-toast";
@@ -12,6 +12,7 @@ const Navbar = () => {
   
   const navItems = [
     { name: "Dashboard", icon: <BookOpen className="mr-2 h-4 w-4" />, path: "/" },
+    { name: "Active Students", icon: <Users className="mr-2 h-4 w-4" />, path: "/active-students" },
     { name: "Add Student", icon: <FilePlus className="mr-2 h-4 w-4" />, path: "/add-student" },
     { name: "Master Data", icon: <FileText className="mr-2 h-4 w-4" />, path: "/master-data" },
     { name: "Financial Reports", icon: <BarChart3 className="mr-2 h-4 w-4" />, path: "/financial-reports" },

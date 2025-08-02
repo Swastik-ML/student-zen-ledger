@@ -5,7 +5,7 @@ import { Student } from "@/utils/types";
 import { fetchStudents } from "@/services/studentService";
 import { useToast } from "@/components/ui/use-toast";
 import StatsSummary from "@/components/dashboard/StatsSummary";
-import RecentStudentsSection from "@/components/dashboard/RecentStudentsSection";
+import ActiveStudentsSummary from "@/components/dashboard/ActiveStudentsSummary";
 import FinancialSummary from "@/components/FinancialSummary";
 
 const Index = () => {
@@ -49,7 +49,7 @@ const Index = () => {
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
-          <RecentStudentsSection 
+          <ActiveStudentsSummary 
             students={students} 
             isLoading={isLoading} 
           />
