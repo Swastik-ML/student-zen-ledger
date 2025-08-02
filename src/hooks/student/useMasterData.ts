@@ -15,6 +15,7 @@ export const useMasterData = () => {
   const [studentIdFilter, setStudentIdFilter] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
+  const [sortByStudentId, setSortByStudentId] = useState<'asc' | 'desc' | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,9 +41,15 @@ export const useMasterData = () => {
     loadStudents();
   }, [toast]);
 
+  // Helper function to extract numeric part from student ID
+  const extractNumericFromStudentId = (studentId: string): number => {
+    const match = studentId.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  };
+
   useEffect(() => {
     // Filter students based on search term, class filter, and student ID filter
-    const result = students.filter(student => {
+    let result = students.filter(student => {
       const matchesSearch = searchTerm === "" || 
         student.name.toLowerCase().includes(searchTerm.toLowerCase());
       
@@ -53,13 +60,35 @@ export const useMasterData = () => {
       
       return matchesSearch && matchesClass && matchesStudentId;
     });
+
+    // Apply sorting if enabled
+    if (sortByStudentId) {
+      result = result.sort((a, b) => {
+        const numA = extractNumericFromStudentId(a.studentId);
+        const numB = extractNumericFromStudentId(b.studentId);
+        
+        if (sortByStudentId === 'asc') {
+          return numA - numB;
+        } else {
+          return numB - numA;
+        }
+      });
+    }
     
     setFilteredStudents(result);
-  }, [searchTerm, classFilter, studentIdFilter, students]);
+  }, [searchTerm, classFilter, studentIdFilter, students, sortByStudentId]);
 
   const handleEditClick = (student: Student) => {
     setSelectedStudent(student);
     setIsEditDialogOpen(true);
+  };
+
+  const handleStudentIdSort = () => {
+    if (sortByStudentId === null || sortByStudentId === 'desc') {
+      setSortByStudentId('asc');
+    } else {
+      setSortByStudentId('desc');
+    }
   };
 
   const handleEditComplete = (updatedStudent: Student) => {
@@ -138,6 +167,8 @@ export const useMasterData = () => {
     setIsEditDialogOpen,
     handleEditClick,
     handleEditComplete,
-    exportData
+    exportData,
+    sortByStudentId,
+    handleStudentIdSort
   };
 };

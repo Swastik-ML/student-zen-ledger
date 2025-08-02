@@ -2,14 +2,22 @@
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Student } from "@/utils/types";
-import { Pencil } from "lucide-react";
+import { Pencil, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 interface StudentTableProps {
   students: Student[];
   onEditClick: (student: Student) => void;
+  sortByStudentId?: 'asc' | 'desc' | null;
+  onStudentIdSort?: () => void;
 }
 
-const StudentTable = ({ students, onEditClick }: StudentTableProps) => {
+const StudentTable = ({ students, onEditClick, sortByStudentId, onStudentIdSort }: StudentTableProps) => {
+  const getSortIcon = () => {
+    if (!sortByStudentId) return <ArrowUpDown className="h-4 w-4" />;
+    return sortByStudentId === 'asc' ? 
+      <ArrowUp className="h-4 w-4" /> : 
+      <ArrowDown className="h-4 w-4" />;
+  };
   return (
     <div className="rounded-md border">
       <Table>
@@ -18,7 +26,15 @@ const StudentTable = ({ students, onEditClick }: StudentTableProps) => {
           <TableRow>
             <TableHead>S.No</TableHead>
             <TableHead>Name</TableHead>
-            <TableHead>Student ID</TableHead>
+            <TableHead 
+              className={onStudentIdSort ? "cursor-pointer hover:bg-muted/50" : ""}
+              onClick={onStudentIdSort}
+            >
+              <div className="flex items-center gap-2">
+                Student ID
+                {onStudentIdSort && getSortIcon()}
+              </div>
+            </TableHead>
             <TableHead>Start Date</TableHead>
             <TableHead>Class Type</TableHead>
             <TableHead>Payment</TableHead>

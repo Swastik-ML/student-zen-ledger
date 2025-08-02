@@ -23,7 +23,9 @@ const MasterData = () => {
     setIsEditDialogOpen,
     handleEditClick,
     handleEditComplete,
-    exportData
+    exportData,
+    sortByStudentId,
+    handleStudentIdSort
   } = useMasterData();
 
   if (loading) {
@@ -71,7 +73,9 @@ const MasterData = () => {
       
       <StudentTable 
         students={filteredStudents} 
-        onEditClick={handleEditClick} 
+        onEditClick={handleEditClick}
+        sortByStudentId={sortByStudentId}
+        onStudentIdSort={handleStudentIdSort}
       />
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
