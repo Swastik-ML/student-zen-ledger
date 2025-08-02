@@ -1,6 +1,14 @@
 import { Student } from "@/utils/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, Users } from "lucide-react";
 
 interface DailyScheduleBoardProps {
   students: Student[];
@@ -76,17 +84,38 @@ const DailyScheduleBoard = ({ students }: DailyScheduleBoardProps) => {
                 </div>
                 <div className="flex-1 ml-4">
                   {studentsInSlot.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {studentsInSlot.map((student) => (
-                        <Badge
-                          key={student.id}
-                          variant="secondary"
-                          className="text-xs bg-teacher-100 text-teacher-700 hover:bg-teacher-200"
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 bg-teacher-100 border-teacher-200 text-teacher-700 hover:bg-teacher-200 z-50"
                         >
-                          {student.name} ({student.classType})
-                        </Badge>
-                      ))}
-                    </div>
+                          <Users className="h-4 w-4 mr-2" />
+                          {studentsInSlot.length} Student{studentsInSlot.length > 1 ? 's' : ''}
+                          <ChevronDown className="h-4 w-4 ml-2" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent 
+                        className="w-64 bg-white border border-gray-200 shadow-lg z-50"
+                        align="start"
+                      >
+                        {studentsInSlot.map((student) => (
+                          <DropdownMenuItem
+                            key={student.id}
+                            className="flex items-center justify-between p-3 hover:bg-teacher-50 cursor-default"
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900">{student.name}</span>
+                              <span className="text-xs text-gray-500">ID: {student.studentId}</span>
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              {student.classType}
+                            </Badge>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   ) : (
                     <span className="text-sm text-gray-400">No classes scheduled</span>
                   )}
